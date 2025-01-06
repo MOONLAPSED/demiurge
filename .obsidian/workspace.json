@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "fa2af7c497149c08",
+        "id": "c5048e609c890835",
         "type": "tabs",
         "children": [
           {
-            "id": "3e28e906f7728097",
+            "id": "74488a871fc0df1c",
             "type": "leaf",
             "state": {
               "type": "empty",
@@ -173,13 +173,15 @@
       "zk-prefixer:Create new unique note": false
     }
   },
-  "active": "3e28e906f7728097",
+  "active": "74488a871fc0df1c",
   "lastOpenFiles": [
+    "KnowledgeBase/Thermodynamic-Information Bridge Theory.md",
     "KnowledgeBase/KnowledgeBase.md",
+    "README.md",
+    "BUILD.md",
     "KnowledgeBase/media/image.jpg.md",
     "KnowledgeBase.md",
     "KnowledgeBase/media/image.jpg 1.md",
-    "KnowledgeBase/Thermodynamic-Information Bridge Theory.md",
     "KnowledgeBase/media/image.jpg",
     "KnowledgeBase/Agency.md",
     "KnowledgeBase/media/image.md",
@@ -195,9 +197,7 @@
     "Knowledge Base/media/image.jpg",
     "Knowledge Base/media",
     "Knowledge Base/RLHF/Model.md",
-    "README.md",
     "Knowledge Base/RLHF/Machine Learning.md",
-    "BUILD.md",
     "output/merkle_ring.toml",
     "output",
     "src/ffi/__init__.py",

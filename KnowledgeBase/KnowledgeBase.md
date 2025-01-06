@@ -9,16 +9,9 @@ linklist:
 All directories which contain markdown files are to include a `/media/` sub directory for multimedia files the markdown files may reference. This enables the use of multimedia in the text-based `.md` files.
 
 #### Image-macro
+![...](/KnowledgeBase/media/image.jpg)
 
-#obsidian-markdown-symlink (first), followed by #VSCode :
-
-![...][image.jpg]
-
-![...](/KnowledgeBase//media/image.jpg)
-    
-    `![...](/KnowledgeBase//media/image.jpg)`
-
-	Obsidian-md(primary)-syntax: top, VScode-syntax: bottom
+    Achieved by typing: `![...](/KnowledgeBase/media/image.jpg)`
 
 ___
 
