@@ -11,10 +11,14 @@
             "id": "fdd31e2b2d08bdd8",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "Prompt.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "Prompt"
             }
           }
         ]
@@ -173,12 +177,12 @@
       "zk-prefixer:Create new unique note": false
     }
   },
-  "active": "5c1ff4b3eecf4926",
+  "active": "fdd31e2b2d08bdd8",
   "lastOpenFiles": [
-    "Knowledge Base/Thermodynamic-Information Bridge Theory.md",
-    "Knowledge Base/Agency.md",
     "Knowledge Base/Knowledge Base.md",
     "Knowledge Base/RLHF/RLHF.md",
+    "Knowledge Base/Agency.md",
+    "Knowledge Base/Thermodynamic-Information Bridge Theory.md",
     "Knowledge Base",
     "Knowledge Base/RLHF/markdown",
     "README.md",

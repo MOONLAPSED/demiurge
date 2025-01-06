@@ -3,6 +3,8 @@
 .env
 /jupyter-python
 *.log
+/.obsidian/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
