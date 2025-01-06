@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "6289f253495ef095",
+        "id": "fa2af7c497149c08",
         "type": "tabs",
         "children": [
           {
-            "id": "fc1b0a324e0f48ee",
+            "id": "3e28e906f7728097",
             "type": "leaf",
             "state": {
               "type": "empty",
@@ -173,28 +173,42 @@
       "zk-prefixer:Create new unique note": false
     }
   },
-  "active": "fc1b0a324e0f48ee",
+  "active": "3e28e906f7728097",
   "lastOpenFiles": [
+    "KnowledgeBase/KnowledgeBase.md",
+    "KnowledgeBase/media/image.jpg.md",
+    "KnowledgeBase.md",
+    "KnowledgeBase/media/image.jpg 1.md",
+    "KnowledgeBase/Thermodynamic-Information Bridge Theory.md",
+    "KnowledgeBase/media/image.jpg",
+    "KnowledgeBase/Agency.md",
+    "KnowledgeBase/media/image.md",
+    "build/README.md",
+    "Knowledge Base",
+    "KnowledgeBase/RLHF/RLHF.md",
+    "KnowledgeBase/RLHF/Model.md",
+    "KnowledgeBase/RLHF/Machine Learning.md",
+    "KnowledgeBase/RLHF/Functions.md",
+    "KnowledgeBase/RLHF",
+    "KnowledgeBase",
+    "Knowledge Base/KnowledgeBase.md",
+    "Knowledge Base/media/image.jpg",
+    "Knowledge Base/media",
+    "Knowledge Base/RLHF/Model.md",
+    "README.md",
+    "Knowledge Base/RLHF/Machine Learning.md",
+    "BUILD.md",
+    "output/merkle_ring.toml",
+    "output",
     "src/ffi/__init__.py",
     "src/ffi",
     "tests/__init__.py",
     "tests",
-    "demiurge.json",
-    "main.c",
-    "build/README.md",
-    "build",
-    "CMakeLists.txt",
-    "Knowledge Base/RLHF/Model.md",
     "Knowledge Base/RLHF/RLHF.md",
     "Knowledge Base/RLHF/Functions.md",
-    "quantum_memory.pkl",
-    "output/merkle_ring.toml",
-    "output",
     "Knowledge Base/Thermodynamic-Information Bridge Theory.md",
     "Knowledge Base/Machine Learning.md",
     "Prompt.md",
-    "Knowledge Base/Knowledge Base.md",
-    "Knowledge Base/Agency.md",
-    "README.md"
+    "Knowledge Base/Agency.md"
   ]
 }
