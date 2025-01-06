@@ -84,16 +84,14 @@ class ProjectManager:
         self.root_dir = Path(root_dir)
         self.logger = self._setup_logging()
         self.config = self._load_or_create_config()
-        self.project_config = self._load_project_config()  # Load custom config
-        self.ffi_modules = self.project_config["ffi_modules"]  # Access FFI modules
+        self.project_config = self._load_project_config()
+        self.ffi_modules = self.project_config["ffi_modules"]
         self._ensure_directory_structure()
 
     def _setup_logging(self) -> logging.Logger:
         logger = logging.getLogger(__name__)
         handler = logging.StreamHandler()
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
         logger.addHandler(handler)
         logger.setLevel(logging.INFO)
@@ -247,8 +245,8 @@ class ProjectManager:
             raise RuntimeError(f"Command not found: {cmd[0]}. Is UV installed?")
 
     async def setup_environment(self):
-            """Set up the virtual environment and install dependencies"""
-            self.logger.info("Setting up UV environment...")
+            """Set up the environment based on mode"""
+            self.logger.info("Setting up environment...")
             
             # Create virtual environment
             await self.run_uv_command(["uv", "venv"])
@@ -326,16 +324,33 @@ class ProjectManager:
         """Format code using Ruff"""
         await self.run_uv_command(["uvx", "run", "-m", "ruff", "format", "."])
 
+    async def run_dev_mode(self):
+        """Setup and run operations specific to Developer Mode"""
+        self.logger.info("Running Developer Mode tasks...")
+        # Setup development environment, dependencies, local servers, etc.
+        await self.setup_environment()
+        await self.run_tests()
+
+    async def run_admin_mode(self):
+        """Setup and run operations specific to Admin Mode"""
+        self.logger.info("Running Admin Mode tasks...")
+        # Perform administrative tasks like configuration adjustments and monitoring
+
+    async def run_user_mode(self):
+        """Setup and run operations specific to User Mode"""
+        self.logger.info("Running User Mode tasks...")
+        # Deploy and run the main application
+
+    async def teardown(self):
+        """Teardown any setup done by modes or setup_environment"""
+        self.logger.info("Tearing down environment...")
+        # Clean-up tasks like stopping services
+
 async def main():
     """Main entry point for the project manager"""
-    import argparse
-    
-    parser = argparse.ArgumentParser(description="UV-based Project Manager")
+    parser = argparse.ArgumentParser(description="Mode-based Project Manager")
     parser.add_argument("--root", default=".", help="Project root directory")
-    parser.add_argument("command", choices=[
-        "setup", "run", "test", "lint", "format"
-    ], help="Command to execute")
-    parser.add_argument("args", nargs="*", help="Additional arguments")
+    parser.add_argument("mode", choices=["DEV", "ADMIN", "USER", "TEARDOWN"], help="Mode to execute")
     parser.add_argument("--timeout", type=float, help="Timeout in seconds for commands")
     
     args = parser.parse_args()
@@ -343,18 +358,14 @@ async def main():
     manager = ProjectManager(args.root)
     
     try:
-        if args.command == "setup":
-            await manager.setup_environment()
-        elif args.command == "run":
-            if not args.args:
-                raise ValueError("Module path required for 'run' command")
-            await manager.run_app(args.args[0], *args.args[1:], timeout=args.timeout)
-        elif args.command == "test":
-            await manager.run_tests()
-        elif args.command == "lint":
-            await manager.run_linter()
-        elif args.command == "format":
-            await manager.format_code()
+        if args.mode == "DEV":
+            await manager.run_dev_mode()
+        elif args.mode == "ADMIN":
+            await manager.run_admin_mode()
+        elif args.mode == "USER":
+            await manager.run_user_mode()
+        elif args.mode == "TEARDOWN":
+            await manager.teardown()
     
     except Exception as e:
         manager.logger.error(f"Error: {e}")

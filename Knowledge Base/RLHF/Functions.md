@@ -19,4 +19,6 @@ class Monad(Functor[T]):
         return func(self.value)
 ```
 
-Functions in a first class functions architecture, like Python, are slightly different from 'functors': `Functor ≈ "Something you can apply a function to, while keeping the same type of container."` It is an aspect of [[Category Theory]] and/or [[Functional Semantics]]
+Functions in a first class functions architecture, like Python, are slightly different from 'functors': `Functor ≈ "Something you can apply a function to, while keeping the same type of container."` It is an aspect of [[Category Theory]] and/or Functional Semantics.
+
+See also: [[Model]] (Machine Learning) - a collection of Functions.

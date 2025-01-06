@@ -1,0 +1,9 @@
+{
+    "ffi_modules": [],
+    "src_path": "src",
+    "dev_dependencies": [],
+    "profile_enabled": true,
+    "platform_specific": {
+        "priority": 32
+    }
+}
