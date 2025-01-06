@@ -1,0 +1,188 @@
+{
+  "main": {
+    "id": "a6406e97736cb35f",
+    "type": "split",
+    "children": [
+      {
+        "id": "57e7843561d63396",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "fdd31e2b2d08bdd8",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "New tab"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "8eec242899c6e5a4",
+    "type": "split",
+    "children": [
+      {
+        "id": "4a49343e2252c7f9",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "5c1ff4b3eecf4926",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "9baa5e6ead207e3f",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "1b145f71bcc5ad7b",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "cfd8f07f7b808cc3",
+    "type": "split",
+    "children": [
+      {
+        "id": "156d01fa0798de08",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "caa9ca6ae5325938",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "Knowledge Base/RLHF/RLHF.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for RLHF"
+            }
+          },
+          {
+            "id": "3fe9c31e5bf956b4",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "Knowledge Base/RLHF/RLHF.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from RLHF"
+            }
+          },
+          {
+            "id": "d959c78561b82af8",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "5aa1f7a572e821d8",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Knowledge Base/RLHF/RLHF.md"
+              },
+              "icon": "lucide-list",
+              "title": "Outline of RLHF"
+            }
+          },
+          {
+            "id": "336e6f478721b4e8",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "zk-prefixer:Create new unique note": false
+    }
+  },
+  "active": "5c1ff4b3eecf4926",
+  "lastOpenFiles": [
+    "Knowledge Base/Thermodynamic-Information Bridge Theory.md",
+    "Knowledge Base/Agency.md",
+    "Knowledge Base/Knowledge Base.md",
+    "Knowledge Base/RLHF/RLHF.md",
+    "Knowledge Base",
+    "Knowledge Base/RLHF/markdown",
+    "README.md",
+    "Knowledge Base/RLHF",
+    "Prompt.md"
+  ]
+}
