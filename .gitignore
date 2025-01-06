@@ -3,7 +3,8 @@
 .env
 /jupyter-python
 *.log
-/.obsidian/*
+/.obsidian/
+/.obsidian/workspace.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
