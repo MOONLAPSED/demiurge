@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "c5048e609c890835",
+        "id": "a52ae397f87d1e68",
         "type": "tabs",
         "children": [
           {
-            "id": "74488a871fc0df1c",
+            "id": "240ac4cbe7908c4c",
             "type": "leaf",
             "state": {
               "type": "empty",
@@ -173,10 +173,11 @@
       "zk-prefixer:Create new unique note": false
     }
   },
-  "active": "74488a871fc0df1c",
+  "active": "240ac4cbe7908c4c",
   "lastOpenFiles": [
-    "KnowledgeBase/Thermodynamic-Information Bridge Theory.md",
     "KnowledgeBase/KnowledgeBase.md",
+    "KnowledgeBase/Typing.md",
+    "KnowledgeBase/Thermodynamic-Information Bridge Theory.md",
     "README.md",
     "BUILD.md",
     "KnowledgeBase/media/image.jpg.md",
