@@ -30,38 +30,7 @@ ___
        - Establishment, boostrapping, and maintenance of the (performance of an) [[operation]] of (a) standardized 'cognitive' processes utilizing parameter-passing mechanisms including unix stdio (on ubuntu), git, python, uv, xonsh scripting, npm modules as well as custom typescript or other code which preforms work on the hierarchical ToT
        - Provide a step-by-step thought process leading to the final `Return:` value which will involve a multi-step cognitive process involving the 'evolution' of many ordered sub-processes which may also involve their own `Return:` but which all fit within the hierarchical data structure provided by the other **rules of thumb** and the context available within this instantiation.
 
-# [[obsidian]]-md_format:
-## Frontmatter Implementation
-
- - Utilize 'frontmatter' to include the title and other `link`, `tag`, `linklist` etc. in the knowledge base article(s).
-```
----
-name: "Article Title"
-link: "[[Related Link]]"
-linklist:
-- "[[Link1]]"
-- "[[Link2]]"
----
-```
-  
-## tables
-```md
-___
-| Element          | Syntax/Usage                              |
-|------------------|-------------------------------------------|
-| **Bold Text**    | `**text**`                                |
-| *Italic Text*    | `*text*`                                  |
-| Footnotes        | `[^1]: footnote content`                  |
-| Tables           | this object is a table                    |
-| Lists            | `- Item 1`<br>`- Item 2`<br>`  - Subitem` |
-| Blockquotes      | `> Quote text`                            |
-| Inline Code      | \`code\` in backticks                     |
-| Input/Output     | `Return:` - Expected return<br>           |
-| ""               | `Commands:` + [args & flags]              |
-| Codeblocks       | this object is `fenced` into a codeblock  |
-___
-```
-
+# Heuristics
 ## **Constraints**:
    - Scope limited to text files and Markdown [[Plain Text]]
    - Command line interfaces for accessibility [[CLI]]
@@ -84,7 +53,7 @@ ___
    - Use load balancers to distribute requests [[Load Balancing]]
    - Assertions to catch issues early [[Assertions]]
 
-# Rules of Thumb & Heuristics
+## Rules of Thumb & Heuristics
 Creating a clear project structure is vital for seamless development. Consider these guidelines:
 
 1. Use consistent naming conventions for keys and values to make understanding and searching easier.
@@ -120,6 +89,33 @@ Creating a clear project structure is vital for seamless development. Consider t
    - Values then provide detailed contents related to their respective keys, associating names with descriptions, facts, or instructions across various domains.
    - Structured data formats allow for easier integration with other systems and applications. eg: Many APIs require data to be in a specific format like json or bash.
    - Use a variety of data structures to store information, including arrays, dictionaries, hash tables, trees, graphs, strings, JSON, and other formats for text-based data.
+
+______
+
+# [[obsidian]]-md_format:
+  
+## tables
+```md
+___
+| Element          | Syntax/Usage                              |
+|------------------|-------------------------------------------|
+| **Bold Text**    | `**text**`                                |
+| *Italic Text*    | `*text*`                                  |
+| Footnotes        | `[^1]: footnote content`                  |
+| Tables           | this object is a table                    |
+| Lists            | `- Item 1`<br>`- Item 2`<br>`  - Subitem` |
+| Blockquotes      | `> Quote text`                            |
+| Inline Code      | \`code\` in backticks                     |
+| Input/Output     | `Return:` - Expected return<br>           |
+| ""               | `Commands:` + [args & flags]              |
+| Codeblocks       | this object is `fenced` into a codeblock  |
+___
+```
+
+
+- Utilize camelCase for internal source code
+- Utilize CAPS_CASE for ffi funcs and external source
+- Utilize underscore notation for private variables
 
 ### Inline HTML
 
@@ -215,9 +211,7 @@ LIMIT 10
 
 This lists navigable symlinks to the returned articles, per SQL.
 
-
-______
-
+____
 
 
 # <Knowledge Base Article Generator>
