@@ -27,6 +27,7 @@ import struct
 import pstats
 import shutil
 import tomllib
+import decimal
 import pathlib
 import logging
 import inspect
@@ -123,7 +124,7 @@ What's conserved across these transformations:
     Information content
     Causal structure
     Computational potential"""
-# Particle()(s) are a wrapper that can represent any Python object, including values, methods, functions, and classes.
+# Particle()(s) are a wrapper that can represent any Python object, including values, methods, functions, and classes
 """The type system forms the "boundary" theory
 The runtime forms the "bulk" theory
 The homoiconic property ensures they encode the same information
@@ -132,11 +133,13 @@ The holoiconic property enables:
     Computations as measurements
     Types as boundary conditions
     Runtime as bulk geometry"""
-T = TypeVar('T', bound=any) # T for TypeVar, V for ValueVar. Homoicons are T+V.
+T = TypeVar('T', bound=any) # T for TypeVar, V for ValueVar. Homoicons are T+V, 'Particle()(s)' are all-three
 V = TypeVar('V', bound=Union[int, float, str, bool, list, dict, tuple, set, object, Callable, type])
-C = TypeVar('C', bound=Callable[..., Any])  # callable 'T'/'V' first class function interface
+C = TypeVar('C', bound=Callable[..., Any])  # callable 'T'/'V' (including all objects) + 'FFI'
+# Callable, 'C' TypeVar(s) include Foreign Function Interface, git and (power)shell, principally
 DataType = StrEnum('DataType', 'INTEGER FLOAT STRING BOOLEAN NONE LIST TUPLE') # 'T' vars (stdlib)
-ParticleType = StrEnum('ParticleType', 'FUNCTION CLASS MODULE OBJECT') # 'C' vars (homoiconic methods or classes)
+PyType = StrEnum('ModuleType', 'FUNCTION CLASS MODULE OBJECT') 
+# PyType: first class functions applies to objects, classes and even modules, 'C' vars which are not FFI(s)
 AccessLevel = StrEnum('AccessLevel', 'READ WRITE EXECUTE ADMIN USER')
 QuantumState = StrEnum('QuantumState', ['SUPERPOSITION', 'ENTANGLED', 'COLLAPSED', 'DECOHERENT'])
 class ParticleType(Enum):
@@ -166,7 +169,6 @@ class QuantumNumber:
             # Bosonic quantum number constraints
             if not (n >= 0 and l >= 0 and m >= 0 and s == 0):
                 raise ValueError("Invalid bosonic quantum numbers")
-
         self._quantum_numbers = numbers
 class QuantumNumbers(NamedTuple):
     n: int  # Principal quantum number
@@ -196,6 +198,20 @@ class QuantumParticle(Protocol):
     id: str
     quantum_numbers: QuantumNumbers
     quantum_state: '_QuantumState'
+
+class MathProtocol(Protocol):
+    """Base protocol for mathematical operations"""
+    def __init__(self, *args, **kwargs):
+        pass
+    def __add__(self, other: 'MathProtocol') -> 'MathProtocol':
+        """Add/Commute two mathematical objects together"""
+        raise NotImplementedError
+    def __sub__(self, other: 'MathProtocol') -> 'MathProtocol':
+        """Subtract two mathematical objects"""
+        raise NotImplementedError
+    
+    _decimal_places = decimal.getcontext()
+
 """py objects are implemented as C structures.
 typedef struct _object {
     Py_ssize_t ob_refcnt;
