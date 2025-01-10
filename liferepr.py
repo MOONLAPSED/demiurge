@@ -28,7 +28,6 @@ class Cell:
             if 0 <= nx < x_max and 0 <= ny < y_max
         ]
 
-
 class GameOfLife:
     def __init__(self, width: int, height: int):
         self.width = width
@@ -73,8 +72,6 @@ class GameOfLife:
             print("".join("█" if cell.is_alive else " " for cell in row))
         print()
 
-
-# Example usage
 if __name__ == "__main__":
     game = GameOfLife(width=20, height=10)
     game.randomize(alive_probability=0.3)
