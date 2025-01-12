@@ -11,10 +11,14 @@
             "id": "240ac4cbe7908c4c",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "KnowledgeBase/Thermodynamic-Information Bridge Theory.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "Thermodynamic-Information Bridge Theory"
             }
           }
         ]
@@ -175,9 +179,11 @@
   },
   "active": "240ac4cbe7908c4c",
   "lastOpenFiles": [
+    "KnowledgeBase/RLHF/Hermitian.md",
+    "KnowledgeBase/Axioms.md",
+    "KnowledgeBase/Thermodynamic-Information Bridge Theory.md",
     "KnowledgeBase/KnowledgeBase.md",
     "KnowledgeBase/Typing.md",
-    "KnowledgeBase/Thermodynamic-Information Bridge Theory.md",
     "README.md",
     "BUILD.md",
     "KnowledgeBase/media/image.jpg.md",
