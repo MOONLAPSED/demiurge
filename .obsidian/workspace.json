@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "KnowledgeBase/Thermodynamic-Information Bridge Theory.md",
+                "file": "README.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Thermodynamic-Information Bridge Theory"
+              "title": "README"
             }
           }
         ]
@@ -179,25 +179,25 @@
   },
   "active": "240ac4cbe7908c4c",
   "lastOpenFiles": [
-    "KnowledgeBase/RLHF/Hermitian.md",
-    "KnowledgeBase/Axioms.md",
-    "KnowledgeBase/Thermodynamic-Information Bridge Theory.md",
+    "BUILD.md",
+    "KnowledgeBase/Agency.md",
     "KnowledgeBase/KnowledgeBase.md",
+    "KnowledgeBase/RLHF/Model.md",
+    "KnowledgeBase/RLHF/Machine Learning.md",
+    "KnowledgeBase/RLHF/Functions.md",
+    "KnowledgeBase/RLHF/Hermitian.md",
+    "KnowledgeBase/Thermodynamic-Information Bridge Theory.md",
+    "KnowledgeBase/Axioms.md",
     "KnowledgeBase/Typing.md",
     "README.md",
-    "BUILD.md",
     "KnowledgeBase/media/image.jpg.md",
     "KnowledgeBase.md",
     "KnowledgeBase/media/image.jpg 1.md",
     "KnowledgeBase/media/image.jpg",
-    "KnowledgeBase/Agency.md",
     "KnowledgeBase/media/image.md",
     "build/README.md",
     "Knowledge Base",
     "KnowledgeBase/RLHF/RLHF.md",
-    "KnowledgeBase/RLHF/Model.md",
-    "KnowledgeBase/RLHF/Machine Learning.md",
-    "KnowledgeBase/RLHF/Functions.md",
     "KnowledgeBase/RLHF",
     "KnowledgeBase",
     "Knowledge Base/KnowledgeBase.md",
