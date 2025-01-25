@@ -285,7 +285,6 @@ class Fermion(FundamentalParticle, Protocol):
     @property
     def statistics(self) -> str:
         return 'fermi-dirac'
-    # You would define fermion-specific methods here
 class Boson(FundamentalParticle, Protocol):
     """
     Bosons follow the Bose-Einstein statistics.

@@ -143,6 +143,11 @@ This class provides methods to convert values into computations and vice versa,
         """Transform computation to value (outside-in)"""
         return computation()
 
+    @staticmethod
+    def entangle(a: V, b: V) -> Tuple[C, C]:
+        shared_state = [a, b]
+        return (lambda: shared_state[0], lambda: shared_state[1])
+
 # Quantum Informatic Principles
 #------------------------------------------------------------------------------
 """

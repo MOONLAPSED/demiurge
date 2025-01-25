@@ -4,21 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "a52ae397f87d1e68",
+        "id": "2d21c60131cd62a3",
         "type": "tabs",
         "children": [
           {
-            "id": "240ac4cbe7908c4c",
+            "id": "04feacd5b0f7ed1c",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "README.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "README"
+              "title": "New tab"
             }
           }
         ]
@@ -177,45 +173,48 @@
       "zk-prefixer:Create new unique note": false
     }
   },
-  "active": "240ac4cbe7908c4c",
+  "active": "04feacd5b0f7ed1c",
   "lastOpenFiles": [
-    "BUILD.md",
-    "KnowledgeBase/Agency.md",
+    "KnowledgeBase/RLHF/meta runtime.md",
+    "KnowledgeBase/media/Pasted image 20250119204702.png",
+    "KnowledgeBase/media/Pasted image 20250119204355.png",
+    "RAGKET/src/virtual/__init__.py",
+    "RAGKET/src/virtual/staging.py",
+    "RAGKET/src/virtual/cells.py",
+    "RAGKET/src/utils/__init__.py",
+    "RAGKET/src/utils/platform_handle.py",
+    "RAGKET/src/utils/vektron.py",
+    "RAGKET/src/utils/conjugation.py",
+    "RAGKET/src/utils/conjugat.py",
+    "RAGKET/src/mods/__init__.py",
+    "RAGKET/src/mods/rings.py",
+    "RAGKET/README.md",
+    "abraxus/app/README.md",
+    "abraxus/READMENEW.md",
+    "abraxus/READMEME.md",
+    "abraxus/README.old.md",
+    "abraxus/README.md",
+    "abraxus/prompt.md",
+    "abraxus/BotSpec.md",
+    "Untitled.md",
+    "KnowledgeBase/RLHF/bijection.md",
+    "Pasted image 20250119204702.png",
+    "Pasted image 20250119204355.png",
+    "KnowledgeBase/RLHF/git substrate.md",
+    "KnowledgeBase/Typing.md",
+    "KnowledgeBase/Thermodynamic-Information Bridge Theory.md",
     "KnowledgeBase/KnowledgeBase.md",
+    "KnowledgeBase/Axioms.md",
+    "KnowledgeBase/Agency.md",
+    "README.md",
+    "BUILD.md",
     "KnowledgeBase/RLHF/Model.md",
     "KnowledgeBase/RLHF/Machine Learning.md",
     "KnowledgeBase/RLHF/Functions.md",
     "KnowledgeBase/RLHF/Hermitian.md",
-    "KnowledgeBase/Thermodynamic-Information Bridge Theory.md",
-    "KnowledgeBase/Axioms.md",
-    "KnowledgeBase/Typing.md",
-    "README.md",
     "KnowledgeBase/media/image.jpg.md",
     "KnowledgeBase.md",
-    "KnowledgeBase/media/image.jpg 1.md",
     "KnowledgeBase/media/image.jpg",
-    "KnowledgeBase/media/image.md",
-    "build/README.md",
-    "Knowledge Base",
-    "KnowledgeBase/RLHF/RLHF.md",
-    "KnowledgeBase/RLHF",
-    "KnowledgeBase",
-    "Knowledge Base/KnowledgeBase.md",
-    "Knowledge Base/media/image.jpg",
-    "Knowledge Base/media",
-    "Knowledge Base/RLHF/Model.md",
-    "Knowledge Base/RLHF/Machine Learning.md",
-    "output/merkle_ring.toml",
-    "output",
-    "src/ffi/__init__.py",
-    "src/ffi",
-    "tests/__init__.py",
-    "tests",
-    "Knowledge Base/RLHF/RLHF.md",
-    "Knowledge Base/RLHF/Functions.md",
-    "Knowledge Base/Thermodynamic-Information Bridge Theory.md",
-    "Knowledge Base/Machine Learning.md",
-    "Prompt.md",
-    "Knowledge Base/Agency.md"
+    "Knowledge Base/media/image.jpg"
   ]
 }
