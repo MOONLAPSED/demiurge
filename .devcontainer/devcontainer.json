@@ -1,0 +1,29 @@
+{
+    "name": "Python 3.13 with JupyterLab, Ruff, Black, and Mypy",
+    "image": "mcr.microsoft.com/vscode/devcontainers/base:ubuntu",
+    "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "python.pythonPath": "~/.pyenv/versions/3.13.0/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.ruffEnabled": true,
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "extensions": [
+        "ms-python.python",
+        "charliermarsh.ruff",
+        "ms-python.black-formatter",
+        "matangover.mypy"
+    ],
+    "postCreateCommand": "bash .devcontainer/setup.sh && cp .devcontainer/.bashrc ~/.bashrc && source ~/.bashrc && pip install -e . jupyterlab mypy black",
+    "postStartCommand": "jupyter-lab --ip=0.0.0.0 --no-browser --allow-root",
+    "forwardPorts": [8000, 8888, 8341],
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind",
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+    "remoteUser": "vscode",
+    "features": {
+        "ghcr.io/devcontainers/features/python:1": {
+            "version": "3.13"
+        }
+    }
+}

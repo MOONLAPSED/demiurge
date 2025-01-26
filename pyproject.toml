@@ -1,39 +1,73 @@
+[build-system]
+requires = ["uv-build==0.6.0"]
+build-backend = "uv.build"
+
 [project]
 name = "demiurge"
-version = "0.1.0"
-description = "Add your description here"
+description = "A namespace and filesystem interface for Obsidian knowledge bases."
+authors = [{ name = "MOONLAPSED", email = "MOONLAPSED@gmail.com" }]
 requires-python = ">=3.13"
+version = "0.3.469"
+readme = { file = "README.md", content-type = "text/markdown" }
+license = { text = "MIT" }
+keywords = ["namespace", "filesystem", "obsidian", "knowledge-base"]
 dependencies = []
 
-[project.readme]
-file = "README.md"
-content-type = "text/markdown"
+[tool.cognosis.api]
+readme = { file = "src/api/README.md", content-type = "text/markdown" }
 
-[tool.pdm.conda.pypi-mapping]
-download-dir = "/tmp"
-url = "https://url/to/mapping.yaml"
+[scripts]
+main = "main:main"
+cleanup = "src.utils.cleanup:main"
 
-[tool.black]
-line-length = 88
+[tool.uv]
+venv.path = ".venv"
+
+[tool.env.toml]
+path = "{working_dir}/.devcontainer/env.toml"
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "mypy",
+    "nox",
+    "pre-commit",
+    "jupyterlab",
+    "pytest",
+    "pytest-cov",
+    "pytest-benchmark",
+
+]
 
 [tool.flake8]
 max-line-length = 88
 extend-ignore = ["E203", "W503"]
 
+[tool.black]
+line-length = 88
+target-version = ["py313"]
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.scratch
+  | \.nox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.13"
+strict = true
+show_error_codes = true
 disallow_untyped_defs = true
+exclude = ["build/", "dist/", ".venv/"]
 ignore_missing_imports = true
 
-[tool.isort]
-profile = "black"
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-
-[project.scripts]
-main = "demiurge.main:main"
-
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+[tool.ruff]
+line-length = 88
+ignore = ["W503"]
+select = ["E", "F", "W", "B"]
+exclude = ["build/", "dist/", ".venv/"]
