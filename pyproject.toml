@@ -4,7 +4,7 @@ build-backend = "uv.build"
 
 [project]
 name = "demiurge"
-description = "A namespace and filesystem interface for Obsidian knowledge bases."
+description = "A themed namespace and filesystem interface for Obsidian knowledge bases."
 authors = [{ name = "MOONLAPSED", email = "MOONLAPSED@gmail.com" }]
 requires-python = ">=3.13"
 version = "0.3.469"
@@ -13,7 +13,7 @@ license = { text = "MIT" }
 keywords = ["namespace", "filesystem", "obsidian", "knowledge-base"]
 dependencies = []
 
-[tool.cognosis.api]
+[tool.demiurge.api]
 readme = { file = "src/api/README.md", content-type = "text/markdown" }
 
 [scripts]
@@ -24,7 +24,7 @@ cleanup = "src.utils.cleanup:main"
 venv.path = ".venv"
 
 [tool.env.toml]
-path = "{working_dir}/.devcontainer/env.toml"
+path = "{working_dir}/.devcontainer/.env
 
 [project.optional-dependencies]
 dev = [
@@ -33,10 +33,6 @@ dev = [
     "nox",
     "pre-commit",
     "jupyterlab",
-    "pytest",
-    "pytest-cov",
-    "pytest-benchmark",
-
 ]
 
 [tool.flake8]

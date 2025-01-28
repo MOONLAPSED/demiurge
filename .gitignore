@@ -5,6 +5,13 @@
 *.log
 /.obsidian/
 /.obsidian/workspace.json
+/KnowledgeBase/*
+!/.obsidian/core-plugins.json
+!/.obsidian/themes/80s Neon/manifest.json
+!/.obsidian/themes/80s Neon/theme.css
+!/KnowledgeBase/RLHF.md
+!/KnowledgeBase/media/image.jpg
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
