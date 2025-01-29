@@ -75,8 +75,9 @@ class ContentRegistry:
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
                 self.modules[module_name] = module
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"Error loading module from {path}: {e}")
+                print(f"Module name: {module_name}")
 
         self.metadata[str(rel_path)] = metadata
         return metadata
@@ -102,11 +103,10 @@ class ContentRegistry:
         }
         output_path.write_text(json.dumps(metadata_dict, indent=2))
 
-# Usage
 def main():
     registry = ContentRegistry(Path.cwd())
     registry.scan_directory()
-    registry.export_metadata(Path('content_metadata.json'))
+    registry.export_metadata(Path('metadata_content.json'))
     return 0
 
 if __name__ == "__main__":
