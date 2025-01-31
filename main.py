@@ -161,7 +161,6 @@ class StateVector:
     state: __QuantumState__
     coherence_length: float
     entropy: float
-
 @dataclass
 class MemoryVector:
     address_space: complex
@@ -169,14 +168,10 @@ class MemoryVector:
     entanglement: float
     state: MemoryState
     size: int
-
 class Symmetry(Protocol, Generic[T, V, C]):
     def preserve_identity(self, type_structure: T) -> T: ...
     def preserve_content(self, value_space: V) -> V: ...
     def preserve_behavior(self, computation: C) -> C: ...
-class ParticleType(Enum):
-    FERMION = auto()
-    BOSON = auto()
 class QuantumNumbers(NamedTuple):
     n: int  # Principal quantum number
     l: int  # Azimuthal quantum number
@@ -202,15 +197,16 @@ class QuantumNumber:
             if not (n >= 0 and l >= 0 and m >= 0 and s == 0):
                 raise ValueError("Invalid bosonic quantum numbers")
         self._quantum_numbers = numbers
-
 class QuantumParticle(Protocol):
-    """Extension of your Particle protocol to include quantum properties"""
+    """Base protocol for mathematical operations with quantum properties.
+    This is a quantum 'protocol' rather than a quantum 'class' like what appear
+    before and after this, because this is more like an ABC but which applies to
+    meta-resolving intepreted python object, but not necessarilly the only, or
+    indeed, the active one.
+    Enables AP lazy C meta-pythonic runtime (mutlti-instantiation) resolution."""
     id: str
     quantum_numbers: QuantumNumbers
     quantum_state: '_QuantumState'
-
-class MathProtocol(Protocol):
-    """Base protocol for mathematical operations"""
     def __init__(self, *args, **kwargs):
         pass
     def __add__(self, other: 'MathProtocol') -> 'MathProtocol':
@@ -219,9 +215,7 @@ class MathProtocol(Protocol):
     def __sub__(self, other: 'MathProtocol') -> 'MathProtocol':
         """Subtract two mathematical objects"""
         raise NotImplementedError
-    
     _decimal_places = decimal.getcontext()
-
 """py objects are implemented as C structures.
 typedef struct _object {
     Py_ssize_t ob_refcnt;
@@ -321,7 +315,6 @@ class DegreeOfFreedom:
     operator: QuantumOperator
     state_space: HilbertSpace
     constraints: List[Symmetry]
-    
     def evolve(self, state: StateVector) -> StateVector:
         # Apply constraints
         for symmetry in self.constraints:
@@ -367,7 +360,6 @@ class QuantumOperator:
     def __init__(self, dimension: int):
         self.hilbert_space = HilbertSpace(dimension)
         self.matrix: List[List[complex]] = [[complex(0,0)] * dimension] * dimension
-        
     def apply(self, state_vector: StateVector) -> StateVector:
         # Combine both mathematical and runtime transformations
         quantum_state = QuantumState(
