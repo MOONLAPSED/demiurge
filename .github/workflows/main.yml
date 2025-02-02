@@ -1,10 +1,13 @@
 name: python-app
 
 on:
+  schedule:
+    - cron: "0 * * * *"  # Runs every hour
+  workflow_dispatch:  # Allows manual execution
   push:
-    branches: [ "main" ]
+    branches: [ "staging" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "production" ]
 
 jobs:
   build-and-test:
