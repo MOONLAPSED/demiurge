@@ -5,11 +5,10 @@ case $- in
       *) return;;
 esac
 # ==========================================================
-# Aliases
+# Aliases + Key+Commands [(modifier) + key]
 # ==========================================================
 alias ...='../../'
 alias ..='../'
-# alias cr='history | grep <search_term>' # see (reverse-i-search)`' == "ctrl+r"
 # gitdoc  # see (gitdoc) below
 # H [] # see (H) below
 # alert [] # see (alert) below
@@ -18,6 +17,10 @@ alias ..='../'
 # .bp # see (bp) below
 # backup [] # see (backup) below
 # ct [] # see (ct) below
+# hg [] # see (hg) below
+# HG [] # see (HG) below
+# gunadd [] # reverse git add (takes off git add <file> from staging area)
+# unstage # see (unstage) below
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
@@ -45,7 +48,6 @@ alias diff='git diff --color-words'
 alias dif='git diff --color --word-diff --stat'
 # ----------------------------------------------------
 # Git Functions
-# reverse git add (takes off git add <file> from staging area)
 function unstage() {
   git reset HEAD -- $1
 }
@@ -98,15 +100,12 @@ if [ -n "$force_color_prompt" ]; then
         color_prompt=yes
     fi
 fi
-
 if [ "$color_prompt" = yes ]; then
     PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
 else
     PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
 fi
-# enable programmable completion features (you don't need to enable
-# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
-# sources /etc/bash.bashrc).
+# enable programmable completion features
 if ! shopt -oq posix; then
   if [ -f /usr/share/bash-completion/bash_completion ]; then
     . /usr/share/bash-completion/bash_completion
@@ -118,38 +117,6 @@ if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
     export LS_COLORS="$LS_COLORS:ow=30;44:" # fix ls color for folders with 777 permissions
 # ==========================================================
-# Custom History Search Functions
-# ==========================================================
-# Smart command history search
-cr() {
-    history | grep --color=auto -i "$@"
-}
-
-# Filter command history with reverse sorting and unique results
-H() {
-    history | grep -i "$@" | sort -r | uniq
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# ==========================================================
 # Colorized Output Functions
 # ==========================================================
 # Define basic ANSI color escape codes for named colors
@@ -159,18 +126,12 @@ YELLOW='\033[38;5;226m'
 BLUE='\033[38;5;21m'
 PURPLE='\033[38;5;93m'
 NC='\033[0m' # No Color
-# General-purpose function to colorize text
-ct() {
-    local color_code="$1"
-    shift
-    echo -e "${color_code}$*${NC}"
-}
 # NAMED color functions
-red() { color_text "$RED" "$@"; }
-green() { color_text "$GREEN" "$@"; }
-yellow() { color_text "$YELLOW" "$@"; }
-blue() { color_text "$BLUE" "$@"; }
-purple() { color_text "$PURPLE" "$@"; }
+red() { ct "$RED" "$@"; }
+green() { ct "$GREEN" "$@"; }
+yellow() { ct "$YELLOW" "$@"; }
+blue() { ct "$BLUE" "$@"; }
+purple() { ct "$PURPLE" "$@"; }
 # Color Picker: Cycles through all 256 available colors in the terminal
 cpick() {
     for i in {0..255}; do
@@ -181,7 +142,6 @@ cpick() {
             echo # New line
         fi
     done
-
     # Displaying named colors at the end of the cycle
     echo -e "\nNamed Colors:"
     echo -e "${RED}RED    \033[0m"
@@ -191,84 +151,25 @@ cpick() {
     echo -e "${PURPLE}PURPLE \033[0m"
 
 }
+# Function to colorize text using cpick #'s
+ct() {
+    local color_code="$1"
+    shift
+    echo -e "${color_code}$*${NC}"
+}
 echo "$(green "demiurge spectral #'s:.")"
 cpick
 # ==========================================================
-# BASH and prompt Configurations
-# ==========================================================
-# Colored GCC warnings and errors
-export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
-force_color_prompt=yes
-if [ -n "$force_color_prompt" ]; then
-    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
-        # We have color support; assume it's compliant with Ecma-48
-        # (ISO/IEC-6429). (Lack of such support is extremely rare, and such
-        # a case would tend to support setf rather than setaf.)
-        color_prompt=yes
-    else
-        color_prompt=
-    fi
-fi
-if [ "$color_prompt" = yes ]; then
-    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
-else
-    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
-fi
-# Set a colored prompt
-force_color_prompt=yes
-if [ -n "$force_color_prompt" ]; then
-    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
-        color_prompt=yes
-    fi
-fi
-
-if [ "$color_prompt" = yes ]; then
-    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
-else
-    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
-fi
-# Check if the shell is running interactively
-check_interactive_shell() {
-    case "$-" in
-        *i*) return 0 ;; # Interactive shell
-        *) return 1 ;;   # Non-interactive shell
-    esac
-}
-# Set variable identifying the chroot (if available)
-if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
-    debian_chroot=$(cat /etc/debian_chroot)
-fi
-# Function to set up terminal title and color support
-setup_terminal() {
-    case "$TERM" in
-        xterm*|rxvt*)
-            PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
-            ;;
-        *)
-            ;;
-    esac
-    # Enable color support of ls and also add handy aliases
-    if [ -x /usr/bin/dircolors ]; then
-        test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
-        alias ls='ls --color=auto'
-        alias grep='grep --color=auto'
-        alias fgrep='fgrep --color=auto'
-        alias egrep='egrep --color=auto'
-        alias lll='ls -lka --color=auto'
-        alias ll='ls -alF --color=auto'
-        alias la='ls -A --color=auto'
-        alias l='ls -CF --color=auto'
-    fi
-    # Colored GCC warnings and errors
-    export GCC_COLORS
-}
-# Check if terminal setup should be enabled
-if [ -n "$ENABLE_TERMINAL_SETUP" ]; then
-    setup_terminal
-
-# ==========================================================
 # Custom Functions
 # ==========================================================
+# HISTORY grep
+hg() {
+    history | grep --color=auto -i "$@"
+}
+# Filter command history with reverse sorting and unique results
+HG() {
+    history | grep -i "$@" | sort -r | uniq
+}
 # cr - Reverse search through command history
 #
 # Usage:
@@ -342,7 +243,6 @@ H() {
 function backup() {
     cp "$1" "$1.bak"
 }
-
 # alert - Notify when a long-running command completes
 #
 # Usage:
@@ -414,7 +314,6 @@ popx() {
 bp() {
     cp -r ./* ../
 }
-
 # .bp - Backport all files and directories to parent directory
 #
 # Usage:
@@ -433,13 +332,11 @@ bp() {
 .bp() {
     local current_dir="$(pwd)"
     local parent_dir="$(dirname "$current_dir")"
-
     # Check if the current directory is not the root directory
     if [[ "$current_dir" == "/" ]]; then
         echo "Cannot move the root directory."
         return 1
     fi
-
     # Copy all files and directories (including hidden ones)
     shopt -s dotglob # Enable matching dotfiles
     for item in ./*; do
@@ -449,26 +346,9 @@ bp() {
         fi
     done
     shopt -u dotglob # Disable matching dotfiles
-
     # Change to the parent directory
     cd "$parent_dir" || return
 
     echo "All files and directories copied and deleted from the current directory."
 }
-# ==========================================================
-# External Packages
-# ==========================================================
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/home/tp/miniconda/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/home/tp/miniconda/etc/profile.d/conda.sh" ]; then
-        . "/home/tp/miniconda/etc/profile.d/conda.sh"
-    else
-        export PATH="/home/tp/miniconda/bin:$PATH"
-    fi
 fi
-unset __conda_setup
-# <<< conda initialize <<<
