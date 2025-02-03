@@ -1,0 +1,98 @@
+[user]
+    name = Your Name
+    email = your.email@example.com
+
+[core]
+    editor = vim
+    autocrlf = input
+    fsmonitor = true
+
+[color]
+    ui = auto
+
+[alias]
+    # General Status & Log
+    st = status
+    lg = log --graph --decorate --oneline --all
+    ll = log -1 --stat
+    b = branch
+    co = checkout
+    cb = checkout -b
+
+    # Commits & Pushes
+    cm = commit -m
+    amend = commit --amend --no-edit
+    ca = commit --amend
+    undo = reset --soft HEAD~1
+    uncommit = reset --soft HEAD^
+
+    # Diffs
+    d = diff --color-words
+    dc = diff --cached --color-words
+    ds = diff --stat
+    dw = diff --word-diff
+    wip = commit -am "WIP"
+
+    # Stashing & Cleaning
+    s = stash
+    sa = stash apply
+    sl = stash list
+    sc = stash clear
+    wipe = clean -fdX
+
+    # Rebase & Fixing
+    rbi = rebase --interactive
+    rba = rebase --abort
+    rbc = rebase --continue
+    fix = commit --fixup
+
+    # Pushing & Pulling
+    p = push
+    pu = pull --rebase
+    fp = fetch --prune
+    clonefast = clone --depth=1
+    pf = push --force-with-lease
+
+    # Tags
+    tags = tag -l
+    latest = describe --tags --abbrev=0
+
+    # Hooks
+    precommit = !echo 'Running pre-commit hooks...' && pre-commit run --all-files
+    postcommit = !echo '✅ Commit complete!' && git log -1 --stat
+    hookinstall = !cp -r ~/.git_hooks/* .git/hooks/ && chmod +x .git/hooks/*
+    hooklist = !ls -l .git/hooks/
+
+[rerere]
+    enabled = true
+
+[push]
+    default = current
+
+[pull]
+    rebase = true
+
+[fetch]
+    prune = true
+
+[gc]
+    auto = 256
+    aggressive = true
+
+[commit]
+    verbose = true
+    gpgsign = false
+
+[merge]
+    tool = vimdiff
+    conflictstyle = diff3
+
+[diff]
+    tool = vimdiff
+    colorMoved = default
+
+[rebase]
+    autostash = true
+
+[credential]
+    helper = cache

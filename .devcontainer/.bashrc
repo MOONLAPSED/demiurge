@@ -260,6 +260,43 @@ function backup() {
 #
 alias alert='echo "Command completed: $(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
 # ----------------------------------------------------
+cherry() {
+    local YELLOW="\033[1;33m"
+    local GREEN="\033[1;32m"
+    local RED="\033[1;31m"
+    local BLUE="\033[1;34m"
+    local CYAN="\033[1;36m"
+    local RESET="\033[0m"
+
+    echo -e "${YELLOW}🔍 Last 10 Commits:${RESET}"
+    git log --oneline -n 10 --graph --color
+
+    if [ -z "$1" ]; then
+        echo -e "${CYAN}📌 Usage: cpick <commit-hash>${RESET}"
+        return 1
+    fi
+
+    echo -e "${GREEN}🌱 Cherry-picking commit: $1${RESET}"
+    git cherry-pick "$1"
+
+    if [ $? -eq 0 ]; then
+        echo -e "${BLUE}✅ Successfully applied $1${RESET}"
+    else
+        echo -e "${RED}❌ Cherry-pick failed! Resolve conflicts and run:${RESET}"
+        echo -e "${CYAN}   git cherry-pick --continue${RESET} or ${CYAN}git cherry-pick --abort${RESET}"
+    fi
+}
+# ----------------------------------------------------
+# Reverse 'git add' (unstage files)
+function gunadd() {
+    if [ $# -eq 0 ]; then
+        git reset HEAD .
+    else
+        git reset HEAD "$@"
+    fi
+    echo "✅ Unstaged: $*"
+}
+# ----------------------------------------------------
 # popx - Pop multiple directories from the directory stack
 #
 # Usage:
