@@ -67,6 +67,7 @@
     enabled = true
 
 [push]
+    autoSetupRemote = true
     default = current
 
 [pull]
@@ -96,3 +97,6 @@
 
 [credential]
     helper = cache
+
+[delta]
+    line-numbers = true

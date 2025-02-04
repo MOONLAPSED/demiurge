@@ -37,6 +37,7 @@ import argparse
 import cProfile
 import platform
 import tempfile
+import mimetypes
 import functools
 import linecache
 import traceback
