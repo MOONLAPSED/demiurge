@@ -1,0 +1,9 @@
+version: "3.8"
+
+services:
+  app:
+    # Codespaces does not support host networking, so we use the default bridge network.
+    # Override the inference server URL with a dummy value (or remove it if your code can handle that).
+    environment:
+      - OLLAMA_SERVER=http://dummy:11434
+    # You might also choose to override ports or other settings as needed.

@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  app:
+    # For native Ubuntu, you can enable host networking. Uncomment if desired:
+    # network_mode: "host"
+    
+    # For Windows (Docker Desktop), override the Ollama URL to use host.docker.internal.
+    environment:
+      - OLLAMA_SERVER=http://host.docker.internal:11434
