@@ -1,7 +1,18 @@
 #!/bin/bash
+# /.devcontainer/setup.sh
 set -e  # Exit on any error
 
 echo "Setting up the Demiurge dev environment..."
+
+# Load the correct .env file based on the current branch
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [[ "$BRANCH" == "staging" ]]; then
+    cp /config/staging.env .env
+elif [[ "$BRANCH" == "main" ]]; then
+    cp /config/production.env .env
+else
+    cp /config/dev.env .env
+fi
 
 # Install Python dependencies and set up the environment
 uv install --extra dev

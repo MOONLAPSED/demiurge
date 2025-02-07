@@ -1,23 +1,30 @@
 {
-    "name": "Python 3.13 with JupyterLab, Ruff, Black, and Mypy",
+    "name": "Py 3.13 with Jupyter kernel + JLab, R, B, M, and Docker + VScode/dev-env/git CICD",
     "image": "mcr.microsoft.com/vscode/devcontainers/base:ubuntu",
-    "settings": {
-        "terminal.integrated.defaultProfile.linux": "bash",
-        "python.pythonPath": "~/.pyenv/versions/3.13.0/bin/python",
-        "python.linting.enabled": true,
-        "python.linting.ruffEnabled": true,
-        "editor.formatOnSave": true,
-        "editor.defaultFormatter": "ms-python.black-formatter"
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "editor.formatOnSave": true,
+                "python.pythonPath": "~/.pyenv/versions/3.13.0/bin/python",
+                "python.linting.enabled": true,
+                "python.linting.ruffEnabled": true,
+                "editor.defaultFormatter": "ms-python.black-formatter"
+            },
+            "extensions": [
+                "ms-python.python",
+                "charliermarsh.ruff",
+                "ms-python.black-formatter",
+                "matangover.mypy",
+                "ms-python.debugpy"
+            ]
+        }
     },
-    "extensions": [
-        "ms-python.python",
-        "charliermarsh.ruff",
-        "ms-python.black-formatter",
-        "matangover.mypy"
-    ],
-    "postCreateCommand": "bash .devcontainer/setup.sh && cp .devcontainer/.bashrc ~/.bashrc && source ~/.bashrc && pip install -e . jupyterlab mypy black",
+    "postCreateCommand": "bash .devcontainer/provisioning.sh && bash .devcontainer/setup.sh && cp .devcontainer/.bashrc ~/.bashrc && source ~/.bashrc && pip install -e . || true",
     "postStartCommand": "jupyter-lab --ip=0.0.0.0 --no-browser --allow-root",
     "forwardPorts": [8000, 8888, 8341],
+    "runArgs": ["--network=host"],
+    "onCreateCommand": "if [ \"$CODESPACES\" = \"true\" ]; then echo 'In Codespaces: Running minimal setup'; else bash .devcontainer/provisioning.sh; fi || true",
     "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind",
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
     "remoteUser": "vscode",
@@ -25,5 +32,8 @@
         "ghcr.io/devcontainers/features/python:1": {
             "version": "3.13"
         }
+    },
+    "remoteEnv": {
+        "OLLAMA_SERVER": "http://host.docker.internal:11434"
     }
 }

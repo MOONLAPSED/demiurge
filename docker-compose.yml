@@ -6,5 +6,6 @@ services:
     image: open-webui-latest
     ports:
       - "5000:5000"
+    # network_mode: "host"  # Works on Linux; change for Windows
     environment:
       - OLLAMA_SERVER=http://localhost:11434
