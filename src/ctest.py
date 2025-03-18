@@ -143,9 +143,9 @@ def scan_directory(root_dir: Path, filters: FilterData):
         print(f"Processing {path}")
 
 # Example usage
-filters = FilterData()
-filters._init_filters()
-scan_directory(Path(__file__), filters)
+# filters = FilterData()
+# filters._init_filters()
+# scan_directory(Path(__file__), filters)
 
 @dataclass
 class FileMetadata:
@@ -253,20 +253,21 @@ async def app(scope, receive, send):
         })
 
 # Native IPv6 Datagram Handler
-async def ipv6_echo_server():
+# IPv6 Datagram Message Relay
+async def ipv6_message_relay():
     sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+    # Set TTL to 32 hops - packets will be discarded after passing through 32 routers
+    sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_UNICAST_HOPS, 32)
     sock.bind(('::1', 9999))
     print("Listening for IPv6 datagrams on port 9999...")
 
     while True:
         data, addr = sock.recvfrom(1024)
-        print(f"Received {data} from {addr}")
-        sock.sendto(data, addr)
-
-# Shell Command Execution
-def execute_command(command: str):
-    result = subprocess.run(command, shell=True, capture_output=True, text=True)
-    return result.stdout.strip()
+        print(f"Received datagram: {data}")
+        print(f"Source: [{addr[0]}]:{addr[1]} (scope_id={addr[3]})")
+        # Note: We don't echo back - messages propagate forward only
+        # Optional: Add TTL handling
+        # sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_UNICAST_HOPS, ttl)
 
 # Main entry point
 async def main():
@@ -283,8 +284,8 @@ async def main():
     elif IS_WINDOWS:
         print("Windows Shell Output:", execute_command("echo Hello from shell"))
 
-    # Start IPv6 Echo Server
-    asyncio.create_task(ipv6_echo_server())
+    # Start IPv6 Message Relay
+    asyncio.create_task(ipv6_message_relay())
 
     # Run ASGI App Example
     print("Starting ASGI app...")

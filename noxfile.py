@@ -21,5 +21,5 @@ def versioned(session: nox.Session, version: str) -> None:
     Run a versioned session.
     From the CLI: `nox -s versioned -- 0.3.69`
     """
-    session.install(f"cognosis=={version}")
+    session.install(f"demiurge=={version}")
     session.run("python", "-m", "demiurge")

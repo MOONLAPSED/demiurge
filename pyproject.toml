@@ -1,10 +1,6 @@
-[build-system]
-requires = ["uv-build==0.6.0"]
-build-backend = "uv.build"
-
 [project]
 name = "demiurge"
-description = "A themed namespace and filesystem interface for Obsidian knowledge bases."
+description = "A namespace and filesystem interface for Obsidian knowledge bases."
 authors = [{ name = "MOONLAPSED", email = "MOONLAPSED@gmail.com" }]
 requires-python = ">=3.13"
 version = "0.3.469"
@@ -20,11 +16,8 @@ readme = { file = "src/api/README.md", content-type = "text/markdown" }
 main = "main:main"
 cleanup = "src.utils.cleanup:main"
 
-[tool.uv]
-venv.path = ".venv"
-
 [tool.env.toml]
-path = "{working_dir}/.devcontainer/.env
+path = "{working_dir}/.devcontainer/.env"
 
 [project.optional-dependencies]
 dev = [

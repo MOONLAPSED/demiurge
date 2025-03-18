@@ -48,3 +48,5 @@ dynamic_module = create_module(module_name, module_code, main_module_path)
 
 # Test the dynamic module
 dynamic_module.greet()  # Output: Hello from cognos module!
+
+# demonstrate with QuantumMemoryFS object and Future-Participle syntax in triple-double quotes.

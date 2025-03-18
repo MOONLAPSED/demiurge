@@ -79,7 +79,6 @@ except ImportError:
     __all__ += __file__
 IS_WINDOWS = os.name == 'nt'
 IS_POSIX = os.name == 'posix'
-profiler = cProfile.Profile()
 if IS_WINDOWS:
     from ctypes import windll
     from ctypes import wintypes
@@ -117,12 +116,12 @@ def find_available_port(start_port: int) -> int:
     logger.info(f"Found available port: {port}")
     return port
 
+benchmark_profiler = cProfile.Profile()
+
 @lambda _: _()
 def FireFirst() -> None:
     """Function that fires on import."""
-    #profiler.enable()
-    #logger.info("Profiler enabled.")
-    PORT = 8420
+    PORT = 8421  # Changed from 8420 to avoid conflict
     try:
         available_port = find_available_port(PORT)
         logger.info(f"Using port: {available_port}")
@@ -130,7 +129,17 @@ def FireFirst() -> None:
     except Exception as e:
         logger.error(f"An error occurred: {e}")
     finally:
-        return True  # Fires as soon as Python sees it
+        return True
+
+class CommandBenchmark:
+    """Benchmark execution of a command"""
+    def __init__(self, command: List[str], iterations: int = 10):
+        self.command = command
+        self.iterations = iterations
+        self.results: List[float] = []
+    def run(self) -> float:
+        best = sys.maxsize
+        for _ in range(self.iterations):
 
 class SystemProfiler:
     """Handles system profiling and performance measurements"""
@@ -373,6 +382,6 @@ def main() -> int:
 
 if __name__ == "__main__":
   # Try:
-  # python topinit.py -- python -c "print('hello')"
-  # python topinit.py -- python src/__init__.py arg1  
+  # uv run .\src\simple\benchmark.py -- python -c "print('hello')"
+  # python .\src\simple\benchmark.py -- python src/__init__.py arg1  
   sys.exit(main())

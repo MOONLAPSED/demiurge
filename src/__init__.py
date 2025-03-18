@@ -68,15 +68,6 @@ from typing import (
     Any, Dict, List, Optional, Union, Callable, TypeVar, Tuple, Generic, Set, OrderedDict,
     Coroutine, Type, NamedTuple, ClassVar, Protocol, runtime_checkable, AsyncIterator, Iterator
 )
-try:
-    from src.__init__ import __all__
-    if not __all__:
-        __all__ = []
-    else:
-        __all__ += __file__
-except ImportError:
-    __all__ = []
-    __all__ += __file__
 IS_WINDOWS = os.name == 'nt'
 IS_POSIX = os.name == 'posix'
 profiler = cProfile.Profile()
