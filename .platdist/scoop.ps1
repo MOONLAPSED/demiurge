@@ -101,6 +101,10 @@ if ($currentPath -notlike "*$desktopPath*") {
     Write-Host "PATH already contains required entries."
 }
 
+# Update all installed applications
+Write-Host "Updating all installed applications..."
+scoop update *
+
 # Attempt to set Windows Terminal Preview as default
 Set-WindowsTerminalPreviewAsDefault
 
