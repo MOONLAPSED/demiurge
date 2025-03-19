@@ -94,165 +94,10 @@ elif IS_POSIX:
         print(f"{__file__} failed to import ctypes on platform: {os.name}")
 """
 Top-level monolithic application logic:
-- File content registration and metadata storage.
-- Dynamic discovery and loading of modules.
 - Platform-aware FFI calls.
 - ASGI-compatible HTTP app.
 - Native IPv6 datagram handling.
 """
-@dataclass
-class MimeTypeData:
-    """The MIME types which this application handles (whitelist)."""
-    def _init_mimetypes(self):
-        mimetypes.add_type('text/markdown', '.md')
-        mimetypes.add_type('text/plain', '.txt')
-        # mimetypes.add_type('application/python', '.py')
-
-@dataclass
-class FilterData:
-    """Contains data and logic for filtering files."""
-    file_filters: Set[str] = field(default_factory=set)
-    directory_filters: Set[str] = field(default_factory=set)
-
-    def _init_filters(self):
-        # Initialize file filters (e.g., extensions to exclude)
-        self.file_filters.update({'.tmp', '.log', '.bak'})
-
-        # Initialize directory filters (e.g., directories to exclude)
-        self.directory_filters.update({'__pycache__', '.git', '.svn'})
-
-    def should_exclude_file(self, path: Path) -> bool:
-        """Determine if a file should be excluded based on its extension."""
-        return path.suffix in self.file_filters
-
-    def should_exclude_directory(self, path: Path) -> bool:
-        """Determine if a directory should be excluded based on its name."""
-        return path.name in self.directory_filters
-
-def scan_directory(root_dir: Path, filters: FilterData):
-    """Scan directory applying filters."""
-    for path in root_dir.rglob('*'):
-        if path.is_dir():
-            if filters.should_exclude_directory(path):
-                continue
-        elif path.is_file():
-            if filters.should_exclude_file(path):
-                continue
-
-        # Process the file or directory
-        print(f"Processing {path}")
-
-# Example usage
-# filters = FilterData()
-# filters._init_filters()
-# scan_directory(Path(__file__), filters)
-
-@dataclass
-class FileMetadata:
-    path: Path
-    mime_type: str
-    size: int
-    created: float
-    modified: float
-    hash: str
-    symlinks: list[Path] = None
-    content: Optional[str] = None
-
-class ContentRegistry:
-    def __init__(self, root_dir: Path):
-        self.root_dir = root_dir
-        self.metadata: Dict[str, FileMetadata] = {}
-        self.modules: Dict[str, Any] = {}
-        self._init_mimetypes()
-
-    def _init_mimetypes(self):
-        mimetypes.add_type('text/markdown', '.md')
-        mimetypes.add_type('text/plain', '.txt')
-        # mimetypes.add_type('application/python', '.py') 
-        # # Not-needed if we use the Python interpreter to run the app.
-
-    def _compute_hash(self, path: Path) -> str:
-        hasher = hashlib.sha256()
-        with open(path, 'rb') as f:
-            for chunk in iter(lambda: f.read(65536), b''):
-                hasher.update(chunk)
-        return hasher.hexdigest()
-
-    def _load_text_content(self, path: Path) -> Optional[str]:
-        try:
-            return path.read_text(encoding='utf-8')
-        except UnicodeDecodeError:
-            return None
-
-    def register_file(self, path: Path) -> Optional[FileMetadata]:
-        if not path.is_file():
-            return None
-
-        stat = path.stat()
-        mime_type = mimetypes.guess_type(path)[0] or 'application/octet-stream'
-
-        metadata = FileMetadata(
-            path=path,
-            mime_type=mime_type,
-            size=stat.st_size,
-            created=stat.st_ctime,
-            modified=stat.st_mtime,
-            hash=self._compute_hash(path),
-            symlinks=[p for p in path.parent.glob(f'*{path.name}*') if p.is_symlink()],
-            content=self._load_text_content(path) if 'text' in mime_type else None
-        )
-
-        rel_path = path.relative_to(self.root_dir)
-        module_name = f"content_{rel_path.stem}"
-
-        # Generate dynamic module
-        spec = importlib.util.spec_from_file_location(module_name, str(path))
-        if spec and spec.loader:
-            try:
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-                self.modules[module_name] = module
-            except Exception as e:
-                print(f"Error loading module from {path}: {e}")
-
-        self.metadata[str(rel_path)] = metadata
-        return metadata
-
-    def scan_directory(self):
-        for path in self.root_dir.rglob('*'):
-            if path.is_file():
-                self.register_file(path)
-
-    def export_metadata(self, output_path: Path):
-        metadata_dict = {
-            str(k): {
-                'path': str(v.path),
-                'mime_type': v.mime_type,
-                'size': v.size,
-                'created': datetime.fromtimestamp(v.created).isoformat(),
-                'modified': datetime.fromtimestamp(v.modified).isoformat(),
-                'hash': v.hash,
-                'symlinks': [str(s) for s in (v.symlinks or [])],
-                'has_content': v.content is not None
-            }
-            for k, v in self.metadata.items()
-        }
-        output_path.write_text(json.dumps(metadata_dict, indent=2))
-
-# Example ASGI app
-async def app(scope, receive, send):
-    if scope['type'] == 'http':
-        await send({
-            'type': 'http.response.start',
-            'status': 200,
-            'headers': [(b'content-type', b'text/plain')]
-        })
-        await send({
-            'type': 'http.response.body',
-            'body': b'Hello, ASGI world!'
-        })
-
-# Native IPv6 Datagram Handler
 # IPv6 Datagram Message Relay
 async def ipv6_message_relay():
     sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
@@ -271,19 +116,16 @@ async def ipv6_message_relay():
 
 # Main entry point
 async def main():
-    registry = ContentRegistry(Path.cwd())
-    registry.scan_directory()
-    registry.export_metadata(Path('metadata_content.json'))
-
     # FFI Call Example
     libc.printf(b"Hello from C library\n")
 
     # Execute shell command
     if IS_POSIX:
-        print("POSIX Shell Output:", execute_command("echo 'Hello from shell'"))
+        # print("POSIX Shell Output:", execute_command("echo 'Hello from shell'"))
+        pass
     elif IS_WINDOWS:
-        print("Windows Shell Output:", execute_command("echo Hello from shell"))
-
+        # print("Windows Shell Output:", execute_command("echo Hello from shell"))
+        pass
     # Start IPv6 Message Relay
     asyncio.create_task(ipv6_message_relay())
 
