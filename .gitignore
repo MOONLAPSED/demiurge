@@ -12,6 +12,9 @@
 !/KnowledgeBase/RLHF.md
 !/KnowledgeBase/media/image.jpg
 .env
+demiurge/*
+_build/
+_opam/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
