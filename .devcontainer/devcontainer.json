@@ -1,69 +1,68 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/universal
-{
-	"name": "py3+ocaml-customized Linux Universal",
-	"image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
-	"features": {
-		"ghcr.io/devcontainers/features/git:1": {},
-		"ghcr.io/devcontainers/features/git-lfs:1": {},
-		"ghcr.io/devcontainers/features/github-cli:1": {},
-		"ghcr.io/devcontainers/features/nvidia-cuda:2": {},
-		"ghcr.io/devcontainers/features/python:1": {
-			"version": "3.13"
-		},
-		"ghcr.io/devcontainers/features/sshd:1": {},
-		"ghcr.io/eitsupi/devcontainer-features/nushell:0": {},
-		"ghcr.io/stuartleeks/dev-container-features/shell-history:0": {},
-		"ghcr.io/warrenbuckley/codespace-features/sqlite:1": {},
-		"ghcr.io/devcontainers-community/features/llvm:3": {},
-		"ghcr.io/devcontainers-community/npm-features/prettier:1": {},
-		"ghcr.io/schlich/devcontainer-features/helix:1": {},
-		"ghcr.io/prulloac/devcontainer-features/ollama:1": {},
-		"ghcr.io/va-h/devcontainers-features/uv:1": {},
-		"ghcr.io/jpawlowski/devcontainer-features/codespaces-dotfiles:1": {},
-		"ghcr.io/devcontainers-extra/features/mypy:2": {},
-		"ghcr.io/devcontainers-extra/features/nox:2": {},
-		"ghcr.io/devcontainers-extra/features/ocaml-opam:1": {},
-		"ghcr.io/devcontainers-extra/features/opam-asdf:2": {},
-		"ghcr.io/devcontainers-extra/features/pre-commit:2": {},
-		"ghcr.io/devcontainers-extra/features/pylint:2": {},
-		"ghcr.io/devcontainers-extra/features/ruff:1": {},
-		"ghcr.io/devcontainers-extra/features/vscode-cli:1": {},
-		"ghcr.io/devcontainers-extra/features/vscode-server:1": {},
-		"ghcr.io/devcontainers-extra/features/xonsh:1": {}
-	},
-	"customizations": {
-		"vscode": {
-			"settings": {
-				"terminal.integrated.defaultProfile.linux": "bash",
-				"editor.formatOnSave": true,
-				"python.pythonPath": "/workspaces/${localWorkspaceFolderBasename}/.venv/bin/python",
-				"python.linting.enabled": true,
-				"python.linting.ruffEnabled": true,
-				"editor.defaultFormatter": "ms-python.vscode-pylance"
+	// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+	// README at: https://github.com/devcontainers/templates/tree/main/src/universal
+	{
+		"name": "py3+ocaml-customized Linux Universal",
+		"image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
+		"features": {
+			"ghcr.io/devcontainers/features/git:1": {},
+			"ghcr.io/devcontainers/features/git-lfs:1": {},
+			"ghcr.io/devcontainers/features/github-cli:1": {},
+			"ghcr.io/devcontainers/features/nvidia-cuda:2": {},
+			"ghcr.io/devcontainers/features/python:1": {
+				"version": "3.13"
 			},
-			"extensions": [
-				"ms-python.python",
-				"charliermarsh.ruff",
-				"matangover.mypy",
-				"ms-python.debugpy",
-				"ms-toolsai.jupyter",
-				"perras.UV",
-				"ms-python.vscode-pylance",
-				"ocamllabs.ocaml-platform",
-				"eamodio.gitlens"
-			]
+			"ghcr.io/devcontainers/features/sshd:1": {},
+			"ghcr.io/eitsupi/devcontainer-features/nushell:0": {},
+			"ghcr.io/stuartleeks/dev-container-features/shell-history:0": {},
+			"ghcr.io/warrenbuckley/codespace-features/sqlite:1": {},
+			"ghcr.io/devcontainers-community/features/llvm:3": {},
+			"ghcr.io/devcontainers-community/npm-features/prettier:1": {},
+			"ghcr.io/schlich/devcontainer-features/helix:1": {},
+			"ghcr.io/prulloac/devcontainer-features/ollama:1": {},
+			"ghcr.io/va-h/devcontainers-features/uv:1": {},
+			"ghcr.io/jpawlowski/devcontainer-features/codespaces-dotfiles:1": {},
+			"ghcr.io/devcontainers-extra/features/mypy:2": {},
+			"ghcr.io/devcontainers-extra/features/nox:2": {},
+			"ghcr.io/devcontainers-extra/features/ocaml-opam:1": {},
+			"ghcr.io/devcontainers-extra/features/pre-commit:2": {},
+			"ghcr.io/devcontainers-extra/features/pylint:2": {},
+			"ghcr.io/devcontainers-extra/features/ruff:1": {},
+			"ghcr.io/devcontainers-extra/features/vscode-cli:1": {},
+			"ghcr.io/devcontainers-extra/features/vscode-server:1": {},
+			"ghcr.io/devcontainers-extra/features/xonsh:1": {}
+		},
+		"customizations": {
+			"vscode": {
+				"settings": {
+					"terminal.integrated.defaultProfile.linux": "bash",
+					"editor.formatOnSave": true,
+					"python.pythonPath": "/workspaces/${localWorkspaceFolderBasename}/.venv/bin/python",
+					"python.linting.enabled": true,
+					"python.linting.ruffEnabled": true,
+					"editor.defaultFormatter": "ms-python.vscode-pylance"
+				},
+				"extensions": [
+					"ms-python.python",
+					"charliermarsh.ruff",
+					"matangover.mypy",
+					"ms-python.debugpy",
+					"ms-toolsai.jupyter",
+					"perras.UV",
+					"ms-python.vscode-pylance",
+					"ocamllabs.ocaml-platform",
+					"eamodio.gitlens"
+				]
+			}
+		},
+		"onCreateCommand": "if [ \"$CODESPACES\" = \"true\" ]; then echo 'In Codespaces: Running minimal setup'; else bash .devcontainer/provisioning.sh; fi || true",
+		"postCreateCommand": "bash .devcontainer/setup.sh",
+		"postStartCommand": "source .venv/bin/activate && jupyter-lab --ip=0.0.0.0 --no-browser --allow-root",
+		"forwardPorts": [8000, 8888, 8341],
+		"runArgs": ["--network=host"],
+		"workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind",
+		"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+		"remoteUser": "vscode",
+		"remoteEnv": {
+			"OLLAMA_SERVER": "http://host.docker.internal:11434"
 		}
-	},
-	"onCreateCommand": "if [ \"$CODESPACES\" = \"true\" ]; then echo 'In Codespaces: Running minimal setup'; else bash .devcontainer/provisioning.sh; fi || true",
-	"postCreateCommand": "bash .devcontainer/provisioning.sh && bash .devcontainer/setup.sh && cp .devcontainer/.bashrc ~/.bashrc && source ~/.bashrc && uv venv .venv && source .venv/bin/activate && uv pip install -U jupyterlab nox",
-	"postStartCommand": "source .venv/bin/activate && jupyter-lab --ip=0.0.0.0 --no-browser --allow-root",
-	"forwardPorts": [8000, 8888, 8341],
-	"runArgs": ["--network=host"],
-	"workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind",
-	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-	"remoteUser": "vscode",
-	"remoteEnv": {
-		"OLLAMA_SERVER": "http://host.docker.internal:11434"
 	}
-}
