@@ -1,0 +1,7 @@
+{
+    "python.languageServer": "Pylance",
+    "ocaml.sandbox": {
+        "kind": "opam",
+        "switch": "default"
+    }
+}
