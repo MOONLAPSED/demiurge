@@ -82,7 +82,7 @@ module MorphologicalTypes = struct
     | Decoherent of CoreTypes.thermo_state
 end
 
-(* Enhanced ByteWord with comprehensive quantum-thermodynamic integration *)
+(* ByteWord with comprehensive quantum-thermodynamic integration *)
 module ByteWord = struct
   open MorphologicalTypes
   
@@ -93,6 +93,7 @@ module ByteWord = struct
     c_bit: morphic_state;                       (* Bit 7: Morphic state *)
     character: character;                       (* Intensive/Extensive *)
     birth_time: float;                          (* Thermodynamic timestamp *)
+    internal_energy: float;
     mutable energy: float;                      (* Current energy state *)
     mutable refcount: int;                      (* Reference counting *)
     mutable quantum_state: quantum_thermo_state; (* Quantum state with thermo *)
@@ -130,6 +131,7 @@ module ByteWord = struct
       {
         raw; t_field; v_field; c_bit; character;
         birth_time = Unix.time ();
+        internal_energy = initial_energy;
         energy = initial_energy;
         refcount = 1;
         quantum_state = initial_qstate;
@@ -204,8 +206,8 @@ module Thermodynamics = struct
           let p = Complex.norm_sq z in
           if p = 0.0 then acc else acc -. p *. log p
         ) 0.0 amplitudes
-    | MorphologicalTypes.Collapsed (_, thermo) -> thermo.entropy *. 0.5
-    | MorphologicalTypes.Decoherent thermo -> thermo.entropy *. 2.0
+    | MorphologicalTypes.Collapsed (_, thermo) -> thermo.CoreTypes.entropy *. 0.5
+    | MorphologicalTypes.Decoherent thermo -> thermo.CoreTypes.entropy *. 2.0
     | _ -> 0.0
   
   let free_energy temp entropy internal_energy = 
@@ -214,17 +216,17 @@ module Thermodynamics = struct
   let landauer_minimum temp = boltzmann_k *. temp *. log 2.0
   
   let update_thermo_state bw =
-    let quantum_entropy = entropy_from_quantum_state bw.quantum_state in
-    let classical_entropy = log (float_of_int (bw.raw + 1)) in
+    let quantum_entropy = entropy_from_quantum_state bw.ByteWord.quantum_state in
+    let classical_entropy = log (float_of_int (bw.ByteWord.raw + 1)) in
     let total_entropy = quantum_entropy +. classical_entropy in
-    let internal_energy = bw.energy in    let internal_energy = bw.ByteWord.energy in
-    let new_free_energy = free_energy bw.ByteWord.thermo_state.temperature total_entropy internal_energy in
-    let landauer_cost = landauer_minimum bw.ByteWord.thermo_state.temperature in
+    let internal_energy = bw.ByteWord.energy in
+    let new_free_energy = free_energy bw.ByteWord.thermo_state.CoreTypes.temperature total_entropy internal_energy in
+    let landauer_cost = landauer_minimum bw.ByteWord.thermo_state.CoreTypes.temperature in
     bw.ByteWord.thermo_state <- {
       bw.ByteWord.thermo_state with
-      entropy = total_entropy;
-      free_energy = new_free_energy;
-      landauer_debt = bw.ByteWord.thermo_state.landauer_debt +. landauer_cost;
+      CoreTypes.entropy = total_entropy;
+      CoreTypes.free_energy = new_free_energy;
+      CoreTypes.landauer_debt = bw.ByteWord.thermo_state.CoreTypes.landauer_debt +. landauer_cost;
     }
 end
 
@@ -239,7 +241,7 @@ module Quantum = struct
     Superposition (normalized, thermo_state)
   
   let measure_with_thermodynamic_cost bw =
-    match bw.quantum_state with
+    match bw.ByteWord.quantum_state with
     | Superposition (amplitudes, thermo) ->
         let probabilities = Array.map Complex.norm_sq amplitudes in
         let r = Random.float 1.0 in
@@ -249,8 +251,8 @@ module Quantum = struct
           else find_outcome (acc +. probabilities.(i)) (i + 1)
         in
         let measured_state = find_outcome 0.0 0 in
-        bw.quantum_state <- Collapsed (measured_state, thermo);
-        bw.energy <- bw.energy -. 0.1; (* Measurement cost *)
+        bw.ByteWord.quantum_state <- Collapsed (measured_state, thermo);
+        bw.ByteWord.energy <- bw.ByteWord.energy -. 0.1; (* Measurement cost *)
         Thermodynamics.update_thermo_state bw;
         measured_state
     | Collapsed (state, _) -> state
@@ -261,12 +263,12 @@ module Quantum = struct
     let indices = List.mapi (fun i bw -> i) bw_list in
     let combined_thermo = List.fold_left (fun acc bw ->
       { acc with 
-        entropy = acc.entropy +. bw.thermo_state.entropy;
-        free_energy = acc.free_energy +. bw.thermo_state.free_energy;
+        CoreTypes.entropy = acc.CoreTypes.entropy +. bw.ByteWord.thermo_state.CoreTypes.entropy;
+        CoreTypes.free_energy = acc.CoreTypes.free_energy +. bw.ByteWord.thermo_state.CoreTypes.free_energy;
       }
-    ) (List.hd bw_list).thermo_state (List.tl bw_list) in
+    ) (List.hd bw_list).ByteWord.thermo_state (List.tl bw_list) in
     List.iter (fun bw -> 
-      bw.quantum_state <- Entangled (indices, combined_thermo)
+      bw.ByteWord.quantum_state <- Entangled (indices, combined_thermo)
     ) bw_list
 end
 
@@ -290,12 +292,12 @@ module HoloiconicSystem = struct
     (* Initialize metric with quantum-thermodynamic distances *)
     for i = 0 to n - 1 do
       let state_i = states.(i) in
-      total_energy := !total_energy +. state_i.energy;
-      total_entropy := !total_entropy +. state_i.thermo_state.entropy;
+      total_energy := !total_energy +. state_i.ByteWord.energy;
+      total_entropy := !total_entropy +. state_i.ByteWord.thermo_state.CoreTypes.entropy;
       for j = 0 to n - 1 do
         let state_j = states.(j) in
-        let energy_diff = abs_float (state_i.energy -. state_j.energy) in
-        let entropy_diff = abs_float (state_i.thermo_state.entropy -. state_j.thermo_state.entropy) in
+        let energy_diff = abs_float (state_i.ByteWord.energy -. state_j.ByteWord.energy) in
+        let entropy_diff = abs_float (state_i.ByteWord.thermo_state.CoreTypes.entropy -. state_j.ByteWord.thermo_state.CoreTypes.entropy) in
         bulk_metric.(i).(j) <- sqrt (energy_diff *. energy_diff +. entropy_diff *. entropy_diff)
       done
     done;
@@ -312,21 +314,21 @@ module HoloiconicSystem = struct
   let evolve_system system dt =
     Array.iter (fun bw ->
       (* Thermodynamic evolution *)
-      bw.energy <- bw.energy *. (1.0 -. dt *. 0.01);
+      bw.ByteWord.energy <- bw.ByteWord.energy *. (1.0 -. dt *. 0.01);
       Thermodynamics.update_thermo_state bw;
       
       (* Quantum evolution (simplified) *)
-      match bw.quantum_state with
+      match bw.ByteWord.quantum_state with
       | MorphologicalTypes.Superposition (amplitudes, thermo) ->
-          let phase_factor = Complex.{ re = cos (dt *. bw.energy); im = sin (dt *. bw.energy) } in
+          let phase_factor = Complex.{ re = cos (dt *. bw.ByteWord.energy); im = sin (dt *. bw.ByteWord.energy) } in
           let evolved_amplitudes = Array.map (fun z -> Complex.mul z phase_factor) amplitudes in
-          bw.quantum_state <- MorphologicalTypes.Superposition (evolved_amplitudes, thermo)
+          bw.ByteWord.quantum_state <- MorphologicalTypes.Superposition (evolved_amplitudes, thermo)
       | _ -> ()
     ) system.states;
     
     (* Update system totals *)
-    system.total_energy <- Array.fold_left (fun acc bw -> acc +. bw.energy) 0.0 system.states;
-    system.total_entropy <- Array.fold_left (fun acc bw -> acc +. bw.thermo_state.entropy) 0.0 system.states
+    system.total_energy <- Array.fold_left (fun acc bw -> acc +. bw.ByteWord.energy) 0.0 system.states;
+    system.total_entropy <- Array.fold_left (fun acc bw -> acc +. bw.ByteWord.thermo_state.CoreTypes.entropy) 0.0 system.states
 end
 
 (* Demonstration and examples *)
