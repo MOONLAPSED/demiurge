@@ -1,30 +1,11 @@
+[@@@warning "-32-37"]
 (* Unified Quantum-Thermodynamic Computing System *)
 (* Synthesizing intensive thermodynamic character with holoiconic type system *)
 
 open Printf
 
-(* Core type abstractions with quantum-thermodynamic extensions *)
-module CoreTypes = struct
-  type 'a t_basis = 'a
-  
-  type v_basis = 
-    | VInt of int | VFloat of float | VString of string | VBool of bool
-    | VList of v_basis list | VDict of (string * v_basis) list
-    | VTuple of v_basis list | VQuantum of Complex.t array
-    | VThermo of thermo_state
-  
-  and thermo_state = {
-    temperature: float;
-    entropy: float;
-    free_energy: float;
-    landauer_debt: float;
-  }
-  
-  type ('a, 'b) c_basis = 'a -> 'b
-end
-
 (* Complex numbers for quantum amplitudes *)
-module Complex = struct
+module QComplex = struct
   type t = { re: float; im: float }
   
   let zero = { re = 0.0; im = 0.0 }
@@ -41,6 +22,24 @@ module Complex = struct
   let norm z = sqrt (norm_sq z)
   let scale s z = { re = s *. z.re; im = s *. z.im }
   let to_string z = sprintf "%.3f + %.3fi" z.re z.im
+end
+
+(* Core type abstractions with quantum-thermodynamic extensions *)
+module CoreTypes = struct
+  type v_basis = 
+    | VInt of int | VFloat of float | VString of string | VBool of bool
+    | VList of v_basis list | VDict of (string * v_basis) list
+    | VTuple of v_basis list | VQuantum of QComplex.t array
+    | VThermo of thermo_state
+  
+  and thermo_state = {
+    temperature: float;
+    entropy: float;
+    free_energy: float;
+    landauer_debt: float;
+  }
+  
+  type ('a, 'b) c_basis = 'a -> 'b
 end
 
 (* Morphological Types with Quantum-Thermodynamic Integration *)
@@ -75,7 +74,7 @@ module MorphologicalTypes = struct
   
   (* Quantum states with thermodynamic properties *)
   type quantum_thermo_state = 
-    | Superposition of Complex.t array * CoreTypes.thermo_state
+    | Superposition of QComplex.t array * CoreTypes.thermo_state
     | Entangled of int list * CoreTypes.thermo_state
     | Collapsed of int * CoreTypes.thermo_state
     | Quine of (unit -> quantum_thermo_state)
@@ -116,27 +115,27 @@ module ByteWord = struct
     }
   
   let create ?(temp=300.0) raw =
-    if raw < 0 || raw > 255 then
-      invalid_arg "ByteWord must be 8-bit (0-255)"
-    else
-      let (t_field, v_field, c_bit) = extract_fields raw in
-      let character = match c_bit with Pointable -> Extensive | NonPointable -> Intensive in
-      let thermo = initial_thermo_state temp in
-      let initial_energy = match character with Extensive -> 1.0 | Intensive -> 0.1 in
-      let initial_qstate = 
-        let amplitudes = Array.make 4 Complex.zero in
-        amplitudes.(0) <- Complex.one;
-        Superposition (amplitudes, thermo)
-      in
-      {
-        raw; t_field; v_field; c_bit; character;
-        birth_time = Unix.time ();
-        internal_energy = initial_energy;
-        energy = initial_energy;
-        refcount = 1;
-        quantum_state = initial_qstate;
-        thermo_state = thermo;
-      }
+      if raw < 0 || raw > 255 then
+        invalid_arg "ByteWord must be 8-bit (0-255)"
+      else
+        let (t_field, v_field, c_bit) = extract_fields raw in
+        let character = match c_bit with Pointable -> Extensive | NonPointable -> Intensive in
+        let thermo = initial_thermo_state temp in
+        let initial_energy = match character with Extensive -> 1.0 | Intensive -> 0.1 in
+        let initial_qstate = 
+          let amplitudes = Array.make 4 QComplex.zero in
+          amplitudes.(0) <- QComplex.one;
+          Superposition (amplitudes, thermo)
+        in
+        {
+          raw; t_field; v_field; c_bit; character;
+          birth_time = Unix.time ();
+          internal_energy = initial_energy;
+          energy = initial_energy;
+          refcount = 1;
+          quantum_state = initial_qstate;
+          thermo_state = thermo;
+        }
   
   let get_transformation_rule bw =
     match bw.v_field with
@@ -226,14 +225,14 @@ module Thermodynamics = struct
   let room_temp = 300.0           (* K *)
   
   let entropy_from_quantum_state = function
-    | MorphologicalTypes.Superposition (amplitudes, _) ->
-        Array.fold_left (fun acc z -> 
-          let p = Complex.norm_sq z in
-          if p = 0.0 then acc else acc -. p *. log p
-        ) 0.0 amplitudes
-    | MorphologicalTypes.Collapsed (_, thermo) -> thermo.CoreTypes.entropy *. 0.5
-    | MorphologicalTypes.Decoherent thermo -> thermo.CoreTypes.entropy *. 2.0
-    | _ -> 0.0
+      | MorphologicalTypes.Superposition (amplitudes, _) ->
+          Array.fold_left (fun acc z -> 
+            let p = QComplex.norm_sq z in
+            if p = 0.0 then acc else acc -. p *. log p
+          ) 0.0 amplitudes
+      | MorphologicalTypes.Collapsed (_, thermo) -> thermo.CoreTypes.entropy *. 0.5
+      | MorphologicalTypes.Decoherent thermo -> thermo.CoreTypes.entropy *. 2.0
+      | _ -> 0.0
   
   let free_energy temp entropy internal_energy = 
     internal_energy -. temp *. entropy
@@ -260,15 +259,15 @@ module Quantum = struct
   open MorphologicalTypes
   
   let create_superposition amplitudes thermo_state = 
-    let total = Array.fold_left (fun acc z -> acc +. Complex.norm_sq z) 0.0 amplitudes in
+    let total = Array.fold_left (fun acc z -> acc +. QComplex.norm_sq z) 0.0 amplitudes in
     let norm_factor = 1.0 /. sqrt total in
-    let normalized = Array.map (fun z -> Complex.scale norm_factor z) amplitudes in
+    let normalized = Array.map (fun z -> QComplex.scale norm_factor z) amplitudes in
     Superposition (normalized, thermo_state)
   
   let measure_with_thermodynamic_cost bw =
     match bw.ByteWord.quantum_state with
     | Superposition (amplitudes, thermo) ->
-        let probabilities = Array.map Complex.norm_sq amplitudes in
+        let probabilities = Array.map QComplex.norm_sq amplitudes in
         let r = Random.float 1.0 in
         let rec find_outcome acc i = 
           if i >= Array.length probabilities then i - 1
@@ -296,7 +295,6 @@ module Quantum = struct
       bw.ByteWord.quantum_state <- Entangled (indices, combined_thermo)
     ) bw_list
 end
-
 (* Holoiconic system with quantum-thermodynamic integration *)
 module HoloiconicSystem = struct
   type quantum_computation = {
@@ -345,8 +343,8 @@ module HoloiconicSystem = struct
       (* Quantum evolution (simplified) *)
       match bw.ByteWord.quantum_state with
       | MorphologicalTypes.Superposition (amplitudes, thermo) ->
-          let phase_factor = Complex.{ re = cos (dt *. bw.ByteWord.energy); im = sin (dt *. bw.ByteWord.energy) } in
-          let evolved_amplitudes = Array.map (fun z -> Complex.mul z phase_factor) amplitudes in
+          let phase_factor = QComplex.{ re = cos (dt *. bw.ByteWord.energy); im = sin (dt *. bw.ByteWord.energy) } in
+          let evolved_amplitudes = Array.map (fun z -> QComplex.mul z phase_factor) amplitudes in
           bw.ByteWord.quantum_state <- MorphologicalTypes.Superposition (evolved_amplitudes, thermo)
       | _ -> ()
     ) system.states;
