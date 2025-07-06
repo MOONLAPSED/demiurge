@@ -193,6 +193,31 @@ module ByteWord = struct
     in
     (* Apply Abelian transformation if extensive *)
     abelian_transform base_transform
+  (* Convert ByteWord to value representation *)
+  let to_value bw =
+    match bw.character with
+    | Intensive -> 
+        if bw.raw < 128 then CoreTypes.VInt bw.raw
+        else CoreTypes.VFloat (float_of_int bw.raw)
+    | Extensive ->
+        match bw.quantum_state with
+        | MorphologicalTypes.Superposition (amplitudes, _) ->
+            CoreTypes.VQuantum amplitudes
+        | MorphologicalTypes.Collapsed (state, _) ->
+            CoreTypes.VInt state
+        | MorphologicalTypes.Decoherent thermo ->
+            CoreTypes.VThermo thermo
+        | _ -> CoreTypes.VBool (bw.raw > 127)
+  
+  (* Convert value back to ByteWord *)
+  let from_value ?(temp=300.0) = function
+    | CoreTypes.VInt i -> create ~temp (i land 0xFF)
+    | CoreTypes.VFloat f -> create ~temp (int_of_float f land 0xFF)
+    | CoreTypes.VBool b -> create ~temp (if b then 255 else 0)
+    | CoreTypes.VString s -> create ~temp (String.length s land 0xFF)
+    | CoreTypes.VThermo _ -> create ~temp 128
+    | CoreTypes.VQuantum _ -> create ~temp 192
+    | _ -> create ~temp 0
 end
 
 (* Thermodynamic calculations with quantum corrections *)
@@ -378,5 +403,35 @@ module Examples = struct
     
     printf "\nFinal system state:\n";
     printf "Total energy: %.3f\n" system.total_energy;
-    printf "Total entropy: %.3f\n" system.total_entropy
+    printf "Total entropy: %.3f\n" system.total_entropy;
 end
+  let demo_value_system () =
+    printf "=== Value System Demo ===\n\n";
+    
+    let bw1 = ByteWord.create 42 in
+    let bw2 = ByteWord.create 200 in
+    
+    let val1 = ByteWord.to_value bw1 in
+    let val2 = ByteWord.to_value bw2 in
+    
+    printf "ByteWord 42 -> ";
+    (match val1 with
+     | CoreTypes.VInt i -> printf "VInt %d\n" i
+     | CoreTypes.VFloat f -> printf "VFloat %.2f\n" f
+     | _ -> printf "Other value\n");
+    
+    printf "ByteWord 200 -> ";
+    (match val2 with
+     | CoreTypes.VInt i -> printf "VInt %d\n" i
+     | CoreTypes.VFloat f -> printf "VFloat %.2f\n" f
+     | _ -> printf "Other value\n");
+    
+    (* Create values and convert back *)
+    let original_int = CoreTypes.VInt 123 in
+    let original_bool = CoreTypes.VBool true in
+    
+    let reconstructed_int = ByteWord.from_value original_int in
+    let reconstructed_bool = ByteWord.from_value original_bool in
+    
+    printf "VInt 123 -> ByteWord %s\n" (ByteWord.to_bra_ket reconstructed_int);
+    printf "VBool true -> ByteWord %s\n" (ByteWord.to_bra_ket reconstructed_bool)
