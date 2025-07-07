@@ -1,4 +1,10 @@
 [@@@warning "-32-37"]
+(* 
+https://github.com/MOONLAPSED/demiurge Morphological Source Code &
+Demiurge © 2025 by Moonlapsed is licensed under:
+https://creativecommons.org/licenses/by/4.0/ CC BY 4.0
+*)
+
 (* Unified Quantum-Thermodynamic Computing System *)
 (* Synthesizing intensive thermodynamic character with holoiconic type system *)
 open Printf
@@ -110,7 +116,6 @@ module WordSize = struct
   let to_bits ws = (to_bytes ws) * 8
 end
 
-(* Enhanced ByteWord with comprehensive bit interpretation *)
 module ByteWord = struct
   type t = {
     raw: int;                          (* Full 8-bit value *)
@@ -354,48 +359,79 @@ module VarianceSystem = struct
   }
 end
 
-(* Example usage and demonstration *)
-module Examples = struct
-  let demo_byte_word () =
-    let bw = ByteWord.create 0b11010110 in
-    Printf.printf "ByteWord: %s\n" (ByteWord.to_bra_ket bw);
-    Printf.printf "Is pointable: %b\n" (ByteWord.is_pointable bw);
-    Printf.printf "Transformation rule: %s\n" 
-      (match ByteWord.get_transformation_rule bw with
-       | Identity -> "Identity"
-       | Conjugate -> "Conjugate"
-       | Transpose -> "Transpose"
-       | Adjoint -> "Adjoint"
-       | Inverse -> "Inverse"
-       | Dual -> "Dual"
-       | Complement -> "Complement"
-       | Negation -> "Negation");
-    
-    let transformed = ByteWord.apply_transformation bw in
-    Printf.printf "After transformation: %s\n" (ByteWord.to_bra_ket transformed)
+(* Thermodynamic calculations with quantum corrections *)
+module Thermodynamics = struct
+  let boltzmann_k = 1.380649e-23  (* J/K *)
+  let room_temp = 300.0           (* K *)
   
-  let demo_holoiconic () =
-    let states = Array.init 4 (fun i -> ByteWord.create (i * 64)) in
-    let system = HoloiconicSystem.create_holoiconic_system states in
-    Printf.printf "Created holoiconic system with %d states\n" (Array.length system.states);
-    
-    (* Print bulk geometry *)
-    Printf.printf "Bulk geometry (energy distances):\n";
-    Array.iteri (fun i row ->
-      Printf.printf "Row %d: [" i;
-      Array.iter (fun x -> Printf.printf " %.2f" x) row;
-      Printf.printf " ]\n"
-    ) system.bulk_geometry
+  let entropy_from_quantum_state = function
+      | MorphologicalTypes.Superposition (amplitudes, _) ->
+          Array.fold_left (fun acc z -> 
+            let p = QComplex.norm_sq z in
+            if p = 0.0 then acc else acc -. p *. log p
+          ) 0.0 amplitudes
+      | MorphologicalTypes.Collapsed (_, thermo) -> thermo.CoreTypes.entropy *. 0.5
+      | MorphologicalTypes.Decoherent thermo -> thermo.CoreTypes.entropy *. 2.0
+      | _ -> 0.0
+  
+  let free_energy temp entropy internal_energy = 
+    internal_energy -. temp *. entropy
+  
+  let landauer_minimum temp = boltzmann_k *. temp *. log 2.0
+  
+  let update_thermo_state bw =
+    let quantum_entropy = entropy_from_quantum_state bw.ByteWord.quantum_state in
+    let classical_entropy = log (float_of_int (bw.ByteWord.raw + 1)) in
+    let total_entropy = quantum_entropy +. classical_entropy in
+    let internal_energy = bw.ByteWord.energy in
+    let new_free_energy = free_energy bw.ByteWord.thermo_state.CoreTypes.temperature total_entropy internal_energy in
+    let landauer_cost = landauer_minimum bw.ByteWord.thermo_state.CoreTypes.temperature in
+    bw.ByteWord.thermo_state <- {
+      bw.ByteWord.thermo_state with
+      CoreTypes.entropy = total_entropy;
+      CoreTypes.free_energy = new_free_energy;
+      CoreTypes.landauer_debt = bw.ByteWord.thermo_state.CoreTypes.landauer_debt +. landauer_cost;
+    }
 end
 
-(* Main demonstration *)
-let () = 
-  Printf.printf "=== OCaml Ontological Type System ===\n\n";
+(* Quantum state management with thermodynamic coupling *)
+module Quantum = struct
+  open MorphologicalTypes
   
-  Printf.printf "ByteWord demonstration:\n";
-  Examples.demo_byte_word ();
+  let create_superposition amplitudes thermo_state = 
+    let total = Array.fold_left (fun acc z -> acc +. QComplex.norm_sq z) 0.0 amplitudes in
+    let norm_factor = 1.0 /. sqrt total in
+    let normalized = Array.map (fun z -> QComplex.scale norm_factor z) amplitudes in
+    Superposition (normalized, thermo_state)
   
-  Printf.printf "\nHoloiconic system demonstration:\n";
-  Examples.demo_holoiconic ();
+  let measure_with_thermodynamic_cost bw =
+    match bw.ByteWord.quantum_state with
+    | Superposition (amplitudes, thermo) ->
+        let probabilities = Array.map QComplex.norm_sq amplitudes in
+        let r = Random.float 1.0 in
+        let rec find_outcome acc i = 
+          if i >= Array.length probabilities then i - 1
+          else if r <= acc +. probabilities.(i) then i
+          else find_outcome (acc +. probabilities.(i)) (i + 1)
+        in
+        let measured_state = find_outcome 0.0 0 in
+        bw.ByteWord.quantum_state <- Collapsed (measured_state, thermo);
+        bw.ByteWord.energy <- bw.ByteWord.energy -. 0.1; (* Measurement cost *)
+        Thermodynamics.update_thermo_state bw;
+        measured_state
+    | Collapsed (state, _) -> state
+    | Decoherent _ -> 0
+    | _ -> 0
   
-  Printf.printf "\nOntological type system successfully translated to OCaml!\n"
+  let entangle_states bw_list =
+    let indices = List.mapi (fun i bw -> i) bw_list in
+    let combined_thermo = List.fold_left (fun acc bw ->
+      { acc with 
+        CoreTypes.entropy = acc.CoreTypes.entropy +. bw.ByteWord.thermo_state.CoreTypes.entropy;
+        CoreTypes.free_energy = acc.CoreTypes.free_energy +. bw.ByteWord.thermo_state.CoreTypes.free_energy;
+      }
+    ) (List.hd bw_list).ByteWord.thermo_state (List.tl bw_list) in
+    List.iter (fun bw -> 
+      bw.ByteWord.quantum_state <- Entangled (indices, combined_thermo)
+    ) bw_list
+end
