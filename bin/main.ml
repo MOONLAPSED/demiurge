@@ -1,9 +1,13 @@
 [@@@warning "-32-37"]
+(* 
+https://github.com/MOONLAPSED/demiurge Morphological Source Code &
+Demiurge © 2025 by Moonlapsed is licensed under:
+https://creativecommons.org/licenses/by/4.0/ CC BY 4.0
+*)
+
 (* Unified Quantum-Thermodynamic Computing System *)
 (* Synthesizing intensive thermodynamic character with holoiconic type system *)
-
 open Printf
-
 (* Complex numbers for quantum amplitudes *)
 module QComplex = struct
   type t = { re: float; im: float }
@@ -23,44 +27,59 @@ module QComplex = struct
   let scale s z = { re = s *. z.re; im = s *. z.im }
   let to_string z = sprintf "%.3f + %.3fi" z.re z.im
 end
-
-(* Core type abstractions with quantum-thermodynamic extensions *)
+(* Core type abstractions - OCaml uses GADTs instead of TypeVars *)
 module CoreTypes = struct
-  type v_basis = 
-    | VInt of int | VFloat of float | VString of string | VBool of bool
-    | VList of v_basis list | VDict of (string * v_basis) list
-    | VTuple of v_basis list | VQuantum of QComplex.t array
-    | VThermo of thermo_state
+  (* Type structure (static/potential) basis *)
+  type 'a t_basis = 'a
   
+  (* Value space (measured/actual) basis *)
+  type v_basis = 
+    | VInt of int
+    | VFloat of float 
+    | VString of string
+    | VBool of bool
+    | VList of v_basis list
+    | VDict of (string * v_basis) list
+    | VTuple of v_basis list
+    | VSet of v_basis list
+    | VObject of (string * v_basis) list
+    | VCallable of (v_basis list -> v_basis)
+    | VType of string
   and thermo_state = {
     temperature: float;
     entropy: float;
     free_energy: float;
     landauer_debt: float;
   }
-  
+  (* Computation/Callable (transformative) basis *)
   type ('a, 'b) c_basis = 'a -> 'b
 end
 
-(* Morphological Types with Quantum-Thermodynamic Integration *)
+(* Morphological Types - Hilbert Space representations *)
 module MorphologicalTypes = struct
-  type +'a psi_co = 'a (* Covariant quantum state *)
-  type +'a o_co = 'a   (* Covariant observable *)
-  type +'a u_co = 'a   (* Covariant unitary operator *)
+  (* Covariant quantum state type *)
+  type +'a psi_co = 'a
   
+  (* Covariant observable type *)
+  type +'a o_co = 'a
+  
+  (* Covariant unitary operator type *)
+  type +'a u_co = 'a
+  
+  (* Quantum state *)
   type 'a quantum_state = 'a psi_co
+  
+  (* Classical state *)
   type 'a classical_state = 'a
   
+  (* Variance encoding in OCaml's type system *)
+  type +'a covariant = 'a      (* Covariant - can be read from *)
+  type -'a contravariant = 'a -> unit  (* Contravariant - can be written to *)
+  type 'a invariant = 'a       (* Invariant - can be both *)
   (* Character classification *)
   type character = 
     | Intensive   (* Self-contained, morphically stable *)
     | Extensive   (* Environment-coupled, transformative *)
-  
-  (* Morphic state classification *)
-  type morphic_state = 
-    | Pointable    (* C=1: Environment-coupled, transformative *)
-    | NonPointable (* C=0: Self-contained, stable *)
-  
   (* Transformation rules *)
   type transformation_rule = 
     | Identity      (* 000: No transformation *)
@@ -71,7 +90,6 @@ module MorphologicalTypes = struct
     | Dual          (* 101: Categorical dual *)
     | Complement    (* 110: Logical complement *)
     | Negation      (* 111: Arithmetic negation *)
-  
   (* Quantum states with thermodynamic properties *)
   type quantum_thermo_state = 
     | Superposition of QComplex.t array * CoreTypes.thermo_state
@@ -81,30 +99,41 @@ module MorphologicalTypes = struct
     | Decoherent of CoreTypes.thermo_state
 end
 
-(* ByteWord with comprehensive quantum-thermodynamic integration *)
+(* Word Size Enumeration *)
+module WordSize = struct
+  type t = 
+    | BYTE  (* 8-bit *)
+    | SHORT (* 16-bit *)
+    | INT   (* 32-bit *)
+    | LONG  (* 64-bit *)
+    
+  let to_bytes = function
+    | BYTE -> 1
+    | SHORT -> 2
+    | INT -> 4
+    | LONG -> 8
+    
+  let to_bits ws = (to_bytes ws) * 8
+end
+
 module ByteWord = struct
-  open MorphologicalTypes
-  
   type t = {
-    raw: int;                                    (* Full 8-bit value *)
-    t_field: int;                               (* Bits 0-3: State data *)
-    v_field: int;                               (* Bits 4-6: Morphism selector *)
-    c_bit: morphic_state;                       (* Bit 7: Morphic state *)
-    character: character;                       (* Intensive/Extensive *)
-    birth_time: float;                          (* Thermodynamic timestamp *)
-    internal_energy: float;
-    mutable energy: float;                      (* Current energy state *)
-    mutable refcount: int;                      (* Reference counting *)
-    mutable quantum_state: quantum_thermo_state; (* Quantum state with thermo *)
+    raw: int;                          (* Full 8-bit value *)
+    t_field: int;                      (* Bits 0-3: State/data field *)
+    v_field: int;                      (* Bits 4-6: Morphism selector *)
+    c_bit: morphic_state;              (* Bit 7: Floor morphic state *)
+    birth_time: float;                 (* Thermodynamic timestamp *)
+    mutable energy: float;             (* Current energy state *)
+    mutable refcount: int;             (* Reference counting *)
     mutable thermo_state: CoreTypes.thermo_state; (* Thermodynamic state *)
   }
   
   let extract_fields raw =
-    let t_field = raw land 0x0F in
-    let v_field = (raw lsr 4) land 0x07 in
+    let t_field = raw land 0x0F in           (* Bits 0-3 *)
+    let v_field = (raw lsr 4) land 0x07 in   (* Bits 4-6 *)
     let c_bit = if (raw land 0x80) <> 0 then Pointable else NonPointable in
     (t_field, v_field, c_bit)
-  
+
   let initial_thermo_state temp =
     let entropy = 0.1 *. log (float_of_int 256) in
     {
@@ -113,10 +142,10 @@ module ByteWord = struct
       free_energy = temp *. entropy;
       landauer_debt = 0.0;
     }
-  
-  let create ?(temp=300.0) raw =
-      if raw < 0 || raw > 255 then
-        invalid_arg "ByteWord must be 8-bit (0-255)"
+
+  let create raw =
+    if raw < 0 || raw > 255 then
+      invalid_arg "ByteWord must be 8-bit (0-255)"
       else
         let (t_field, v_field, c_bit) = extract_fields raw in
         let character = match c_bit with Pointable -> Extensive | NonPointable -> Intensive in
@@ -127,40 +156,34 @@ module ByteWord = struct
           amplitudes.(0) <- QComplex.one;
           Superposition (amplitudes, thermo)
         in
-        {
-          raw; t_field; v_field; c_bit; character;
-          birth_time = Unix.time ();
-          internal_energy = initial_energy;
-          energy = initial_energy;
-          refcount = 1;
-          quantum_state = initial_qstate;
-          thermo_state = thermo;
-        }
-  
+      {
+        raw;
+        t_field;
+        v_field;
+        c_bit;
+        birth_time = Unix.time ();
+        energy = (match c_bit with Pointable -> 1.0 | NonPointable -> 0.1);
+        refcount = 1;
+      }
+
+
   let get_transformation_rule bw =
     match bw.v_field with
-    | 0 -> Identity | 1 -> Conjugate | 2 -> Transpose | 3 -> Adjoint
-    | 4 -> Inverse | 5 -> Dual | 6 -> Complement | 7 -> Negation
+    | 0 -> Identity
+    | 1 -> Conjugate
+    | 2 -> Transpose
+    | 3 -> Adjoint
+    | 4 -> Inverse
+    | 5 -> Dual
+    | 6 -> Complement
+    | 7 -> Negation
     | _ -> failwith "Invalid transformation rule"
   
-  (* Helper function to format binary with leading zeros *)
-  let format_binary ~width n =
-    let rec build_binary acc bits value =
-      if bits = 0 then acc
-      else
-        let bit = if (value land (1 lsl (bits - 1))) <> 0 then "1" else "0" in
-        build_binary (acc ^ bit) (bits - 1) value
-    in
-    build_binary "" width n
-  
-  let to_bra_ket bw =
-    let c_str = match bw.c_bit with Pointable -> "1" | NonPointable -> "0" in
-    let v_str = format_binary ~width:3 bw.v_field in
-    let t_str = format_binary ~width:4 bw.t_field in
-    sprintf "<%s%s|%s>" c_str v_str t_str
-  
-  let is_pointable bw = match bw.c_bit with Pointable -> true | NonPointable -> false
-  
+  let is_pointable bw =
+    match bw.c_bit with
+    | Pointable -> true
+    | NonPointable -> false
+
   (* XNOR-based Abelian transformation *)
   let xnor a b width = 
     let mask = (1 lsl width) - 1 in
@@ -173,25 +196,44 @@ module ByteWord = struct
         let new_raw = (bw.raw land 0xF0) lor new_t in
         { bw with t_field = new_t; raw = new_raw; energy = bw.energy *. 0.9 }
     | Intensive -> bw  (* Identity - quines preserve themselves *)
-  
+
+  let int_to_bin_string n width =
+  let rec aux acc n =
+    if n = 0 then acc else aux ((string_of_int (n mod 2)) :: acc) (n / 2)
+  in
+  let bits = aux [] n |> String.concat "" in
+  let len = String.length bits in
+  if len >= width then bits
+  else String.make (width - len) '0' ^ bits
+
+  let to_bra_ket bw =
+    let c_str = match bw.c_bit with Pointable -> "1" | NonPointable -> "0" in
+    let v_str = int_to_bin_string bw.v_field 3 in
+    let t_str = int_to_bin_string bw.t_field 4 in
+    Printf.sprintf "<%s%s|%s>" c_str v_str t_str
+
   let apply_transformation bw =
     let rule = get_transformation_rule bw in
-    let base_transform = match rule with
-      | Identity -> bw
-      | Conjugate -> { bw with v_field = 7 - bw.v_field }
-      | Transpose -> { bw with t_field = bw.t_field lxor 0x0F }
-      | Adjoint -> { bw with v_field = 7 - bw.v_field; t_field = bw.t_field lxor 0x0F }
-      | Inverse -> { bw with raw = 255 - bw.raw } |> fun bw' -> 
-          let (t,v,c) = extract_fields bw'.raw in
-          { bw' with t_field = t; v_field = v; c_bit = c }
-      | Dual -> { bw with c_bit = match bw.c_bit with Pointable -> NonPointable | NonPointable -> Pointable }
-      | Complement -> { bw with t_field = bw.t_field lxor 0x0F }
-      | Negation -> { bw with raw = (-bw.raw) land 0xFF } |> fun bw' ->
-          let (t,v,c) = extract_fields bw'.raw in
-          { bw' with t_field = t; v_field = v; c_bit = c }
-    in
-    (* Apply Abelian transformation if extensive *)
-    abelian_transform base_transform
+    match rule with
+    | Identity -> bw
+    | Conjugate -> { bw with v_field = 7 - bw.v_field }
+    | Transpose -> { bw with t_field = bw.t_field lxor 0x0F }
+    | Adjoint -> 
+        { bw with 
+          v_field = 7 - bw.v_field; 
+          t_field = bw.t_field lxor 0x0F }
+    | Inverse -> 
+        { bw with raw = 255 - bw.raw |> extract_fields |> fun (t,v,c) -> 
+          { bw with t_field = t; v_field = v; c_bit = c } }
+    | Dual -> 
+        { bw with c_bit = match bw.c_bit with 
+          | Pointable -> NonPointable 
+          | NonPointable -> Pointable }
+    | Complement -> { bw with t_field = bw.t_field lxor 0x0F }
+    | Negation -> { bw with raw = (-bw.raw) land 0xFF |> extract_fields |> fun (t,v,c) ->
+          { bw with t_field = t; v_field = v; c_bit = c } }
+    (* Apply Abelian transformation if extensive
+    abelian_transform base_transform  *)
   (* Convert ByteWord to value representation *)
   let to_value bw =
     match bw.character with
@@ -217,6 +259,104 @@ module ByteWord = struct
     | CoreTypes.VThermo _ -> create ~temp 128
     | CoreTypes.VQuantum _ -> create ~temp 192
     | _ -> create ~temp 0
+end
+
+(* Homoiconic/Holoiconic Properties *)
+module HoloiconicSystem = struct
+  (* Boundary theory - type system *)
+  type 'a boundary = 'a CoreTypes.t_basis
+  
+  (* Bulk theory - runtime system *)
+  type 'a bulk = 'a CoreTypes.v_basis
+  
+  (* The homoiconic property ensures type/runtime encode same information *)
+  type ('boundary, 'bulk) homoiconic_pair = {
+    boundary: 'boundary boundary;
+    bulk: 'bulk bulk;
+    encoding: 'boundary -> 'bulk;
+    decoding: 'bulk -> 'boundary;
+  }
+  
+  (* Holoiconic properties *)
+  type quantum_computation = {
+    states: ByteWord.t MorphologicalTypes.quantum_state array;
+    measurements: (ByteWord.t -> ByteWord.t) list;
+    boundary_conditions: ByteWord.t -> bool;
+    bulk_geometry: float array array; (* Metric tensor *)
+    mutable total_entropy: float;
+  }
+  
+  let create_holoiconic_system states =
+    let n = Array.length states in
+    let bulk_metric = Array.make_matrix n n 0.0 in
+    (* Initialize metric with thermodynamic distances *)
+    for i = 0 to n - 1 do
+      for j = 0 to n - 1 do
+        let state_i = states.(i) in
+        let state_j = states.(j) in
+        let energy_diff = abs_float (state_i.energy -. state_j.energy) in
+        bulk_metric.(i).(j) <- energy_diff;
+        let entropy_diff = abs_float (state_i.ByteWord.thermo_state.CoreTypes.entropy -. state_j.ByteWord.thermo_state.CoreTypes.entropy) in
+        bulk_metric.(i).(j) <- sqrt (energy_diff *. energy_diff +. entropy_diff *. entropy_diff)
+      done
+    done;
+    {
+      states;
+      measurements = [Quantum.measure_with_thermodynamic_cost];
+      boundary_conditions = (fun bw -> ByteWord.is_pointable bw);
+      bulk_geometry = bulk_metric;
+      total_energy = !total_energy;
+    }
+
+  let evolve_system system dt =
+    Array.iter (fun bw ->
+      (* Thermodynamic evolution *)
+      bw.ByteWord.energy <- bw.ByteWord.energy *. (1.0 -. dt *. 0.01);
+      Thermodynamics.update_thermo_state bw;
+      
+      (* Quantum evolution (simplified) *)
+      match bw.ByteWord.quantum_state with
+      | MorphologicalTypes.Superposition (amplitudes, thermo) ->
+          let phase_factor = QComplex.{ re = cos (dt *. bw.ByteWord.energy); im = sin (dt *. bw.ByteWord.energy) } in
+          let evolved_amplitudes = Array.map (fun z -> QComplex.mul z phase_factor) amplitudes in
+          bw.ByteWord.quantum_state <- MorphologicalTypes.Superposition (evolved_amplitudes, thermo)
+      | _ -> ()
+    ) system.states;
+    
+    (* Update system totals *)
+    system.total_energy <- Array.fold_left (fun acc bw -> acc +. bw.ByteWord.energy) 0.0 system.states;
+    system.total_entropy <- Array.fold_left (fun acc bw -> acc +. bw.ByteWord.thermo_state.CoreTypes.entropy) 0.0 system.states
+end
+
+(* Type-safe variance system *)
+module VarianceSystem = struct
+  (* Covariant types - can be read from *)
+  type +'a producer = unit -> 'a
+  
+  (* Contravariant types - can be written to *)
+  type -'a consumer = 'a -> unit
+  
+  (* Invariant types - can be both read and written *)
+  type 'a reference = {
+    mutable value: 'a;
+    get: unit -> 'a;
+    set: 'a -> unit;
+  }
+  
+  (* Type-level encoding of the ontological hierarchy *)
+  type ('t, 'v, 'c) ontological_triple = {
+    type_structure: 't CoreTypes.t_basis;
+    value_space: 'v;
+    computation_space: ('v, 'v) CoreTypes.c_basis;
+  }
+  
+  (* Quantum-classical bridge *)
+  type ('q, 'c) quantum_classical_bridge = {
+    quantum_state: 'q MorphologicalTypes.quantum_state;
+    classical_state: 'c MorphologicalTypes.classical_state;
+    measurement: 'q -> 'c;
+    preparation: 'c -> 'q;
+  }
 end
 
 (* Thermodynamic calculations with quantum corrections *)
@@ -295,141 +435,3 @@ module Quantum = struct
       bw.ByteWord.quantum_state <- Entangled (indices, combined_thermo)
     ) bw_list
 end
-(* Holoiconic system with quantum-thermodynamic integration *)
-module HoloiconicSystem = struct
-  type quantum_computation = {
-    states: ByteWord.t array;
-    mutable measurements: (ByteWord.t -> int) list;
-    boundary_conditions: ByteWord.t -> bool;
-    bulk_geometry: float array array;
-    mutable total_energy: float;
-    mutable total_entropy: float;
-  }
-  
-  let create_system states =
-    let n = Array.length states in
-    let bulk_metric = Array.make_matrix n n 0.0 in
-    let total_energy = ref 0.0 in
-    let total_entropy = ref 0.0 in
-    
-    (* Initialize metric with quantum-thermodynamic distances *)
-    for i = 0 to n - 1 do
-      let state_i = states.(i) in
-      total_energy := !total_energy +. state_i.ByteWord.energy;
-      total_entropy := !total_entropy +. state_i.ByteWord.thermo_state.CoreTypes.entropy;
-      for j = 0 to n - 1 do
-        let state_j = states.(j) in
-        let energy_diff = abs_float (state_i.ByteWord.energy -. state_j.ByteWord.energy) in
-        let entropy_diff = abs_float (state_i.ByteWord.thermo_state.CoreTypes.entropy -. state_j.ByteWord.thermo_state.CoreTypes.entropy) in
-        bulk_metric.(i).(j) <- sqrt (energy_diff *. energy_diff +. entropy_diff *. entropy_diff)
-      done
-    done;
-    
-    {
-      states;
-      measurements = [Quantum.measure_with_thermodynamic_cost];
-      boundary_conditions = ByteWord.is_pointable;
-      bulk_geometry = bulk_metric;
-      total_energy = !total_energy;
-      total_entropy = !total_entropy;
-    }
-  
-  let evolve_system system dt =
-    Array.iter (fun bw ->
-      (* Thermodynamic evolution *)
-      bw.ByteWord.energy <- bw.ByteWord.energy *. (1.0 -. dt *. 0.01);
-      Thermodynamics.update_thermo_state bw;
-      
-      (* Quantum evolution (simplified) *)
-      match bw.ByteWord.quantum_state with
-      | MorphologicalTypes.Superposition (amplitudes, thermo) ->
-          let phase_factor = QComplex.{ re = cos (dt *. bw.ByteWord.energy); im = sin (dt *. bw.ByteWord.energy) } in
-          let evolved_amplitudes = Array.map (fun z -> QComplex.mul z phase_factor) amplitudes in
-          bw.ByteWord.quantum_state <- MorphologicalTypes.Superposition (evolved_amplitudes, thermo)
-      | _ -> ()
-    ) system.states;
-    
-    (* Update system totals *)
-    system.total_energy <- Array.fold_left (fun acc bw -> acc +. bw.ByteWord.energy) 0.0 system.states;
-    system.total_entropy <- Array.fold_left (fun acc bw -> acc +. bw.ByteWord.thermo_state.CoreTypes.entropy) 0.0 system.states
-end
-
-(* Demonstration and examples *)
-module Examples = struct
-  let demo_comprehensive () =
-    printf "=== Comprehensive Quantum-Thermodynamic System Demo ===\n\n";
-    
-    (* Create some ByteWords with different characteristics *)
-    let intensive_word = ByteWord.create 0b01010101 in
-    let extensive_word = ByteWord.create 0b11110000 in
-    
-    printf "Intensive word: %s (Energy: %.3f)\n" 
-      (ByteWord.to_bra_ket intensive_word) intensive_word.energy;
-    printf "Extensive word: %s (Energy: %.3f)\n" 
-      (ByteWord.to_bra_ket extensive_word) extensive_word.energy;
-    
-    (* Apply transformations *)
-    let transformed_intensive = ByteWord.apply_transformation intensive_word in
-    let transformed_extensive = ByteWord.apply_transformation extensive_word in
-    
-    printf "\nAfter transformation:\n";
-    printf "Intensive: %s -> %s\n" 
-      (ByteWord.to_bra_ket intensive_word) (ByteWord.to_bra_ket transformed_intensive);
-    printf "Extensive: %s -> %s\n" 
-      (ByteWord.to_bra_ket extensive_word) (ByteWord.to_bra_ket transformed_extensive);
-    
-    (* Create holoiconic system *)
-    let states = Array.init 4 (fun i -> ByteWord.create (i * 64)) in
-    let system = HoloiconicSystem.create_system states in
-    
-    printf "\nHoloiconic system created with %d states\n" (Array.length system.states);
-    printf "Total energy: %.3f\n" system.total_energy;
-    printf "Total entropy: %.3f\n" system.total_entropy;
-    
-    (* Evolve system *)
-    HoloiconicSystem.evolve_system system 0.1;
-    printf "\nAfter evolution (dt=0.1):\n";
-    printf "Total energy: %.3f\n" system.total_energy;
-    printf "Total entropy: %.3f\n" system.total_entropy;
-    
-    (* Quantum measurements *)
-    printf "\nQuantum measurements:\n";
-    Array.iteri (fun i bw ->
-      let measurement = Quantum.measure_with_thermodynamic_cost bw in
-      printf "State %d: measured outcome %d (energy: %.3f)\n" i measurement bw.energy
-    ) system.states;
-    
-    printf "\nFinal system state:\n";
-    printf "Total energy: %.3f\n" system.total_energy;
-    printf "Total entropy: %.3f\n" system.total_entropy;
-end
-  let demo_value_system () =
-    printf "=== Value System Demo ===\n\n";
-    
-    let bw1 = ByteWord.create 42 in
-    let bw2 = ByteWord.create 200 in
-    
-    let val1 = ByteWord.to_value bw1 in
-    let val2 = ByteWord.to_value bw2 in
-    
-    printf "ByteWord 42 -> ";
-    (match val1 with
-     | CoreTypes.VInt i -> printf "VInt %d\n" i
-     | CoreTypes.VFloat f -> printf "VFloat %.2f\n" f
-     | _ -> printf "Other value\n");
-    
-    printf "ByteWord 200 -> ";
-    (match val2 with
-     | CoreTypes.VInt i -> printf "VInt %d\n" i
-     | CoreTypes.VFloat f -> printf "VFloat %.2f\n" f
-     | _ -> printf "Other value\n");
-    
-    (* Create values and convert back *)
-    let original_int = CoreTypes.VInt 123 in
-    let original_bool = CoreTypes.VBool true in
-    
-    let reconstructed_int = ByteWord.from_value original_int in
-    let reconstructed_bool = ByteWord.from_value original_bool in
-    
-    printf "VInt 123 -> ByteWord %s\n" (ByteWord.to_bra_ket reconstructed_int);
-    printf "VBool true -> ByteWord %s\n" (ByteWord.to_bra_ket reconstructed_bool)

@@ -1,4 +1,4 @@
 (executable
  (public_name demiurge)
  (name main)
- (libraries demiurge unix))
+ (libraries unix demiurge))
