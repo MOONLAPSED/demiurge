@@ -1,0 +1,603 @@
+#lang racket
+
+;; ============================================================================
+;; MORPHOLOGICAL QUINE COLLISION DYNAMICS
+;; A stochastic system for quine evolution through random collisions
+;; ============================================================================
+
+(require racket/random)
+
+;; ByteWord structure: 8-bit morphological entity
+(struct byteword (value) #:transparent)
+
+;; Extract T/V/C bits from byteword
+(define (extract-tvc bw)
+  (let ([val (byteword-value bw)])
+    (values (arithmetic-shift val -4)     ; T: upper 4 bits
+            (bitwise-and (arithmetic-shift val -1) #b111)  ; V: middle 3 bits
+            (bitwise-and val #b1))))      ; C: lower 1 bit
+
+;; Create byteword from T/V/C components
+(define (make-tvc t v c)
+  (byteword (bitwise-ior (arithmetic-shift t 4)
+                         (arithmetic-shift v 1)
+                         c)))
+
+;; Morphological state predicates
+(define (dynamic? bw)
+  (let-values ([(t v c) (extract-tvc bw)])
+    (= c 1)))
+
+(define (morphic? bw)
+  (let-values ([(t v c) (extract-tvc bw)])
+    (= c 0)))
+
+(define (dead? bw)
+  (let-values ([(t v c) (extract-tvc bw)])
+    (and (= c 0) (= v 0))))  ; DunderC = 0
+
+;; ============================================================================
+;; TOPOLOGICAL CONSTRAINTS (Chemical Bonding Rules)
+;; ============================================================================
+
+;; A quine is a sequence of bytewords that satisfies topological constraints
+(struct quine (words) #:transparent)
+
+;; Check if a sequence has closed-loop topology
+(define (has-closed-loop? words)
+  (and (>= (length words) 2)
+       (let ([pointers (filter dynamic? words)])
+         (and (not (null? pointers))
+              ;; Simple constraint: dynamic words must "point" to each other
+              (let ([first-ptr (car pointers)]
+                    [last-ptr (last pointers)])
+                (let-values ([(t1 v1 c1) (extract-tvc first-ptr)]
+                             [(t2 v2 c2) (extract-tvc last-ptr)])
+                  ;; Crude topological constraint: T values must form cycle
+                  (= (modulo (+ t1 t2) 16) 0)))))))
+
+;; More sophisticated topological constraint: winding number
+(define (compute-winding-number words)
+  (if (< (length words) 3)
+      0
+      (let loop ([remaining words]
+                 [winding 0])
+        (if (< (length remaining) 2)
+            (modulo winding 8)  ; Normalize to 0-7
+            (let* ([w1 (car remaining)]
+                   [w2 (cadr remaining)])
+              (let-values ([(t1 v1 c1) (extract-tvc w1)]
+                           [(t2 v2 c2) (extract-tvc w2)])
+                (let ([angle-diff (- t2 t1)])
+                  (loop (cdr remaining)
+                        (+ winding (if (> angle-diff 8) -1 
+                                      (if (< angle-diff -8) 1 0)))))))))))
+
+;; Check if quine has non-trivial topology
+(define (has-nontrivial-topology? words)
+  (let ([winding (compute-winding-number words)])
+    (and (not (= winding 0))
+         (< (abs winding) 4))))  ; Not too wild
+
+;; Check if quine satisfies all topological constraints
+(define (valid-quine? q)
+  (let ([words (quine-words q)])
+    (and (not (null? words))
+         (>= (length words) 2)
+         (has-closed-loop? words)
+         (has-nontrivial-topology? words)
+         ;; Must have at least one dynamic word
+         (ormap dynamic? words)
+         ;; Can't be all dead
+         (not (andmap dead? words)))))
+
+;; ============================================================================
+;; STOCHASTIC MORPHOLOGICAL DYNAMICS
+;; ============================================================================
+
+;; Generate random byteword with bias toward interesting configurations
+(define (random-byteword)
+  (let ([base (random 256)])
+    ;; Bias toward having some dynamic words
+    (if (< (random 100) 30)
+        (byteword (bitwise-ior base #b1))  ; Force C=1
+        (byteword base))))
+
+;; Generate random quine of given length
+(define (random-quine length)
+  (quine (build-list length (lambda (_) (random-byteword)))))
+
+;; Gaussian-inspired mutation with topological awareness
+(define (mutate-byteword bw sigma)
+  (let* ([val (byteword-value bw)]
+         [noise (- (random (* 2 sigma)) sigma)]
+         [new-val (modulo (+ val noise) 256)])
+    (byteword new-val)))
+
+;; Mutate entire quine with preservation bias
+(define (mutate-quine q sigma)
+  (let ([words (quine-words q)])
+    (quine (map (lambda (bw)
+                  (if (< (random 100) 20)  ; 20% chance of mutation
+                      (mutate-byteword bw sigma)
+                      bw))
+                words))))
+
+;; ============================================================================
+;; COLLISION DYNAMICS
+;; ============================================================================
+
+;; Collision between two quines creates morphological fragments
+(define (collide-quines q1 q2)
+  (let* ([words1 (quine-words q1)]
+         [words2 (quine-words q2)]
+         [all-words (append words1 words2)]
+         [shuffled (shuffle all-words)])
+    ;; Create multiple fragments from collision
+    (let* ([len (length shuffled)]
+           [split-points (sort (list 0 
+                                    (+ 1 (random (- len 2)))
+                                    (+ 2 (random (- len 3)))
+                                    len) <)]
+           [fragments (map (lambda (i)
+                            (let ([start (list-ref split-points i)]
+                                  [end (list-ref split-points (+ i 1))])
+                              (quine (take (drop shuffled start) 
+                                          (- end start)))))
+                          (range (- (length split-points) 1)))])
+      (filter (lambda (frag) (> (length (quine-words frag)) 1))
+              fragments))))
+
+;; ============================================================================
+;; MORPHOLOGICAL EVOLUTION ENGINE
+;; ============================================================================
+
+;; Population of quines
+(struct population (quines generation energy) #:transparent)
+
+;; Initialize random population
+(define (init-population size quine-length)
+  (population (build-list size (lambda (_) (random-quine quine-length)))
+              0
+              1000.0))  ; Starting energy
+
+;; Fitness function based on topological complexity
+(define (fitness q)
+  (if (valid-quine? q)
+      (let* ([words (quine-words q)]
+             [dynamic-count (length (filter dynamic? words))]
+             [winding (abs (compute-winding-number words))]
+             [length-bonus (min (length words) 6)])
+        (+ (* dynamic-count 10)
+           (* winding 5)
+           length-bonus))
+      0))
+
+;; Tournament selection
+(define (tournament-select quines)
+  (let* ([tournament-size 3]
+         [candidates (take (shuffle quines) 
+                          (min tournament-size (length quines)))])
+    (argmax fitness candidates)))
+
+;; Evolve population for one generation
+(define (evolve-generation pop mutation-rate)
+  (let* ([quines (population-quines pop)]
+         [gen (population-generation pop)]
+         [energy (population-energy pop)]
+         [valid-quines (filter valid-quine? quines)]
+         [num-valid (length valid-quines)])
+    
+    (if (< num-valid 2)
+        ;; Not enough valid quines - regenerate randomly
+        (population (build-list (length quines) 
+                               (lambda (_) (random-quine (+ 2 (random 4)))))
+                    (+ gen 1)
+                    (* energy 0.99))
+        ;; Perform stochastic operations
+        (let* ([num-mutations (max 1 (quotient num-valid 3))]
+               [num-collisions (max 1 (quotient num-valid 4))]
+               
+               ;; Mutations
+               [mutated (map (lambda (_) 
+                              (mutate-quine (tournament-select valid-quines) 
+                                           mutation-rate))
+                            (range num-mutations))]
+               
+               ;; Collisions
+               [collision-products 
+                (apply append 
+                       (map (lambda (_) 
+                             (collide-quines (tournament-select valid-quines)
+                                           (tournament-select valid-quines)))
+                           (range num-collisions)))]
+               
+               ;; Combine and filter
+               [new-quines (append mutated collision-products)]
+               [survivors (filter valid-quine? new-quines)]
+               
+               ;; Ensure population doesn't die out
+               [final-pop (if (null? survivors)
+                             (list (random-quine 3))  ; Emergency quine
+                             (take survivors (min 50 (length survivors))))])
+          
+          (population final-pop
+                      (+ gen 1)
+                      (* energy 0.95))))))
+
+;; ============================================================================
+;; SIMULATION RUNNER
+;; ============================================================================
+
+;; Run morphological evolution simulation
+(define (run-simulation generations pop-size quine-length mutation-rate)
+  (let loop ([pop (init-population pop-size quine-length)]
+             [gen 0])
+    (if (>= gen generations)
+        pop
+        (let* ([evolved (evolve-generation pop mutation-rate)]
+               [valid-count (length (filter valid-quine? 
+                                          (population-quines evolved)))]
+               [avg-fitness (if (> valid-count 0)
+                               (/ (apply + (map fitness 
+                                              (filter valid-quine? 
+                                                     (population-quines evolved))))
+                                  valid-count)
+                               0)])
+          (printf "Generation ~a: ~a valid quines, avg fitness: ~a, energy: ~a~n" 
+                  gen valid-count 
+                  (exact->inexact avg-fitness)
+                  (exact->inexact (population-energy evolved)))
+          (loop evolved (+ gen 1))))))
+
+;; ============================================================================
+;; ANALYSIS FUNCTIONS
+;; ============================================================================
+
+(define (tvc-list bw)
+  (call-with-values (lambda () (extract-tvc bw))
+    (lambda (t v c) (list t v c))))
+
+;; Analyze topological diversity in population
+(define (analyze-topology pop)
+  (let* ([quines (population-quines pop)]
+         [valid-quines (filter valid-quine? quines)]
+         [tvc-patterns (map (lambda (q)
+                              (map tvc-list (quine-words q)))
+                            valid-quines)]
+         [winding-numbers (map (lambda (q)
+                                (compute-winding-number (quine-words q)))
+                              valid-quines)])
+    (printf "~nTopological Analysis:~n")
+    (printf "  Valid quines: ~a~n" (length valid-quines))
+    (printf "  Unique patterns: ~a~n" (length (remove-duplicates tvc-patterns)))
+    (printf "  Winding numbers: ~a~n" (remove-duplicates winding-numbers))
+    (printf "  Fitness range: ~a to ~a~n" 
+            (if (null? valid-quines) 0 (apply min (map fitness valid-quines)))
+            (if (null? valid-quines) 0 (apply max (map fitness valid-quines))))))
+
+;; ============================================================================
+;; MAIN EXECUTION
+;; ============================================================================
+
+;; Run the simulation!
+(printf "Starting morphological quine evolution...~n")
+(define final-pop (run-simulation 100 30 4 2))
+(analyze-topology final-pop)
+
+;; Show some example valid quines
+(printf "~nExample morphological structures:~n")
+(let ([valid-quines (take (sort (filter valid-quine? (population-quines final-pop))
+                                (lambda (a b) (> (fitness a) (fitness b))))
+                          (min 5 (length (filter valid-quine? 
+                                                (population-quines final-pop)))))])
+  (for ([q valid-quines] [i (in-naturals)])
+    (printf "Quine ~a (fitness ~a, winding ~a): ~a~n" 
+            i (fitness q) (compute-winding-number (quine-words q))
+            (map (lambda (bw) 
+                   (let-values ([(t v c) (extract-tvc bw)])
+                     (format "T:~a V:~a C:~a" t v c)))
+                 (quine-words q)))))
+
+(printf "~nSimulation complete!~n")#lang racket
+
+;; ============================================================================
+;; MORPHOLOGICAL QUINE COLLISION DYNAMICS
+;; A stochastic system for quine evolution through random collisions
+;; ============================================================================
+
+(require racket/random)
+
+;; ByteWord structure: 8-bit morphological entity
+(struct byteword (value) #:transparent)
+
+;; Extract T/V/C bits from byteword
+(define (extract-tvc bw)
+  (let ([val (byteword-value bw)])
+    (values (arithmetic-shift val -4)     ; T: upper 4 bits
+            (bitwise-and (arithmetic-shift val -1) #b111)  ; V: middle 3 bits
+            (bitwise-and val #b1))))      ; C: lower 1 bit
+
+;; Create byteword from T/V/C components
+(define (make-tvc t v c)
+  (byteword (bitwise-ior (arithmetic-shift t 4)
+                         (arithmetic-shift v 1)
+                         c)))
+
+;; Morphological state predicates
+(define (dynamic? bw)
+  (let-values ([(t v c) (extract-tvc bw)])
+    (= c 1)))
+
+(define (morphic? bw)
+  (let-values ([(t v c) (extract-tvc bw)])
+    (= c 0)))
+
+(define (dead? bw)
+  (let-values ([(t v c) (extract-tvc bw)])
+    (and (= c 0) (= v 0))))  ; DunderC = 0
+
+;; ============================================================================
+;; TOPOLOGICAL CONSTRAINTS (Chemical Bonding Rules)
+;; ============================================================================
+
+;; A quine is a sequence of bytewords that satisfies topological constraints
+(struct quine (words) #:transparent)
+
+;; Check if a sequence has closed-loop topology
+(define (has-closed-loop? words)
+  (and (>= (length words) 2)
+       (let ([pointers (filter dynamic? words)])
+         (and (not (null? pointers))
+              ;; Simple constraint: dynamic words must "point" to each other
+              (let ([first-ptr (car pointers)]
+                    [last-ptr (last pointers)])
+                (let-values ([(t1 v1 c1) (extract-tvc first-ptr)]
+                             [(t2 v2 c2) (extract-tvc last-ptr)])
+                  ;; Crude topological constraint: T values must form cycle
+                  (= (modulo (+ t1 t2) 16) 0)))))))
+
+;; More sophisticated topological constraint: winding number
+(define (compute-winding-number words)
+  (if (< (length words) 3)
+      0
+      (let loop ([remaining words]
+                 [winding 0])
+        (if (< (length remaining) 2)
+            (modulo winding 8)  ; Normalize to 0-7
+            (let* ([w1 (car remaining)]
+                   [w2 (cadr remaining)])
+              (let-values ([(t1 v1 c1) (extract-tvc w1)]
+                           [(t2 v2 c2) (extract-tvc w2)])
+                (let ([angle-diff (- t2 t1)])
+                  (loop (cdr remaining)
+                        (+ winding (if (> angle-diff 8) -1 
+                                      (if (< angle-diff -8) 1 0)))))))))))
+
+;; Check if quine has non-trivial topology
+(define (has-nontrivial-topology? words)
+  (let ([winding (compute-winding-number words)])
+    (and (not (= winding 0))
+         (< (abs winding) 4))))  ; Not too wild
+
+;; Check if quine satisfies all topological constraints
+(define (valid-quine? q)
+  (let ([words (quine-words q)])
+    (and (not (null? words))
+         (>= (length words) 2)
+         (has-closed-loop? words)
+         (has-nontrivial-topology? words)
+         ;; Must have at least one dynamic word
+         (ormap dynamic? words)
+         ;; Can't be all dead
+         (not (andmap dead? words)))))
+
+;; ============================================================================
+;; STOCHASTIC MORPHOLOGICAL DYNAMICS
+;; ============================================================================
+
+;; Generate random byteword with bias toward interesting configurations
+(define (random-byteword)
+  (let ([base (random 256)])
+    ;; Bias toward having some dynamic words
+    (if (< (random 100) 30)
+        (byteword (bitwise-ior base #b1))  ; Force C=1
+        (byteword base))))
+
+;; Generate random quine of given length
+(define (random-quine length)
+  (quine (build-list length (lambda (_) (random-byteword)))))
+
+;; Gaussian-inspired mutation with topological awareness
+(define (mutate-byteword bw sigma)
+  (let* ([val (byteword-value bw)]
+         [noise (- (random (* 2 sigma)) sigma)]
+         [new-val (modulo (+ val noise) 256)])
+    (byteword new-val)))
+
+;; Mutate entire quine with preservation bias
+(define (mutate-quine q sigma)
+  (let ([words (quine-words q)])
+    (quine (map (lambda (bw)
+                  (if (< (random 100) 20)  ; 20% chance of mutation
+                      (mutate-byteword bw sigma)
+                      bw))
+                words))))
+
+;; ============================================================================
+;; COLLISION DYNAMICS
+;; ============================================================================
+
+;; Collision between two quines creates morphological fragments
+(define (collide-quines q1 q2)
+  (let* ([words1 (quine-words q1)]
+         [words2 (quine-words q2)]
+         [all-words (append words1 words2)]
+         [shuffled (shuffle all-words)])
+    ;; Create multiple fragments from collision
+    (let* ([len (length shuffled)]
+           [split-points (sort (list 0 
+                                    (+ 1 (random (- len 2)))
+                                    (+ 2 (random (- len 3)))
+                                    len) <)]
+           [fragments (map (lambda (i)
+                            (let ([start (list-ref split-points i)]
+                                  [end (list-ref split-points (+ i 1))])
+                              (quine (take (drop shuffled start) 
+                                          (- end start)))))
+                          (range (- (length split-points) 1)))])
+      (filter (lambda (frag) (> (length (quine-words frag)) 1))
+              fragments))))
+
+;; ============================================================================
+;; MORPHOLOGICAL EVOLUTION ENGINE
+;; ============================================================================
+
+;; Population of quines
+(struct population (quines generation energy) #:transparent)
+
+;; Initialize random population
+(define (init-population size quine-length)
+  (population (build-list size (lambda (_) (random-quine quine-length)))
+              0
+              1000.0))  ; Starting energy
+
+;; Fitness function based on topological complexity
+(define (fitness q)
+  (if (valid-quine? q)
+      (let* ([words (quine-words q)]
+             [dynamic-count (length (filter dynamic? words))]
+             [winding (abs (compute-winding-number words))]
+             [length-bonus (min (length words) 6)])
+        (+ (* dynamic-count 10)
+           (* winding 5)
+           length-bonus))
+      0))
+
+;; Tournament selection
+(define (tournament-select quines)
+  (let* ([tournament-size 3]
+         [candidates (take (shuffle quines) 
+                          (min tournament-size (length quines)))])
+    (argmax fitness candidates)))
+
+;; Evolve population for one generation
+(define (evolve-generation pop mutation-rate)
+  (let* ([quines (population-quines pop)]
+         [gen (population-generation pop)]
+         [energy (population-energy pop)]
+         [valid-quines (filter valid-quine? quines)]
+         [num-valid (length valid-quines)])
+    
+    (if (< num-valid 2)
+        ;; Not enough valid quines - regenerate randomly
+        (population (build-list (length quines) 
+                               (lambda (_) (random-quine (+ 2 (random 4)))))
+                    (+ gen 1)
+                    (* energy 0.99))
+        ;; Perform stochastic operations
+        (let* ([num-mutations (max 1 (quotient num-valid 3))]
+               [num-collisions (max 1 (quotient num-valid 4))]
+               
+               ;; Mutations
+               [mutated (map (lambda (_) 
+                              (mutate-quine (tournament-select valid-quines) 
+                                           mutation-rate))
+                            (range num-mutations))]
+               
+               ;; Collisions
+               [collision-products 
+                (apply append 
+                       (map (lambda (_) 
+                             (collide-quines (tournament-select valid-quines)
+                                           (tournament-select valid-quines)))
+                           (range num-collisions)))]
+               
+               ;; Combine and filter
+               [new-quines (append mutated collision-products)]
+               [survivors (filter valid-quine? new-quines)]
+               
+               ;; Ensure population doesn't die out
+               [final-pop (if (null? survivors)
+                             (list (random-quine 3))  ; Emergency quine
+                             (take survivors (min 50 (length survivors))))])
+          
+          (population final-pop
+                      (+ gen 1)
+                      (* energy 0.95))))))
+
+;; ============================================================================
+;; SIMULATION RUNNER
+;; ============================================================================
+
+;; Run morphological evolution simulation
+(define (run-simulation generations pop-size quine-length mutation-rate)
+  (let loop ([pop (init-population pop-size quine-length)]
+             [gen 0])
+    (if (>= gen generations)
+        pop
+        (let* ([evolved (evolve-generation pop mutation-rate)]
+               [valid-count (length (filter valid-quine? 
+                                          (population-quines evolved)))]
+               [avg-fitness (if (> valid-count 0)
+                               (/ (apply + (map fitness 
+                                              (filter valid-quine? 
+                                                     (population-quines evolved))))
+                                  valid-count)
+                               0)])
+          (printf "Generation ~a: ~a valid quines, avg fitness: ~a, energy: ~a~n" 
+                  gen valid-count 
+                  (exact->inexact avg-fitness)
+                  (exact->inexact (population-energy evolved)))
+          (loop evolved (+ gen 1))))))
+
+;; ============================================================================
+;; ANALYSIS FUNCTIONS
+;; ============================================================================
+
+(define (tvc-list bw)
+  (call-with-values (lambda () (extract-tvc bw))
+    (lambda (t v c) (list t v c))))
+
+;; Analyze topological diversity in population
+(define (analyze-topology pop)
+  (let* ([quines (population-quines pop)]
+         [valid-quines (filter valid-quine? quines)]
+         [tvc-patterns (map (lambda (q)
+                              (map tvc-list (quine-words q)))
+                            valid-quines)]
+         [winding-numbers (map (lambda (q)
+                                (compute-winding-number (quine-words q)))
+                              valid-quines)])
+    (printf "~nTopological Analysis:~n")
+    (printf "  Valid quines: ~a~n" (length valid-quines))
+    (printf "  Unique patterns: ~a~n" (length (remove-duplicates tvc-patterns)))
+    (printf "  Winding numbers: ~a~n" (remove-duplicates winding-numbers))
+    (printf "  Fitness range: ~a to ~a~n" 
+            (if (null? valid-quines) 0 (apply min (map fitness valid-quines)))
+            (if (null? valid-quines) 0 (apply max (map fitness valid-quines))))))
+
+;; ============================================================================
+;; MAIN EXECUTION
+;; ============================================================================
+
+;; Run the simulation!
+(printf "Starting morphological quine evolution...~n")
+(define final-pop (run-simulation 100 30 4 2))
+(analyze-topology final-pop)
+
+;; Show some example valid quines
+(printf "~nExample morphological structures:~n")
+(let ([valid-quines (take (sort (filter valid-quine? (population-quines final-pop))
+                                (lambda (a b) (> (fitness a) (fitness b))))
+                          (min 5 (length (filter valid-quine? 
+                                                (population-quines final-pop)))))])
+  (for ([q valid-quines] [i (in-naturals)])
+    (printf "Quine ~a (fitness ~a, winding ~a): ~a~n" 
+            i (fitness q) (compute-winding-number (quine-words q))
+            (map (lambda (bw) 
+                   (let-values ([(t v c) (extract-tvc bw)])
+                     (format "T:~a V:~a C:~a" t v c)))
+                 (quine-words q)))))
+
+(printf "~nSimulation complete!~n")

@@ -82,7 +82,7 @@ module MorphologicalTypes = struct
   type character = 
     | Intensive   (* Self-contained, morphically stable *)
     | Extensive   (* Environment-coupled, transformative *)
-  (* Transformation rules *)
+  (* Transformation rules - in VV or VVV space *)
   type transformation_rule = 
     | Identity      (* 000: No transformation *)
     | Conjugate     (* 001: Complex conjugation *)
@@ -181,8 +181,8 @@ module ByteWord = struct
       }
   let get_transformation_rule bw =
     match bw.v_field with
-    | 0 -> Identity
-    | 1 -> Conjugate
+    | 0 -> CoreTypes.transformation_rule.Identity
+    | 1 -> CoreTypes.v_basis.t_field.Conjugate
     | 2 -> Transpose
     | 3 -> Adjoint
     | 4 -> Inverse
