@@ -98,6 +98,9 @@ module MorphologicalTypes = struct
     | Quine of (unit -> quantum_thermo_state)
     | Decoherent of CoreTypes.thermo_state
 end
+type character = MorphologicalTypes.character
+let extensive = MorphologicalTypes.Extensive
+let intensive = MorphologicalTypes.Intensive
 
 (* Word Size Enumeration *)
 module WordSize = struct
@@ -121,7 +124,7 @@ module ByteWord = struct
     raw: int;                          (* Full 8-bit value *)
     t_field: int;                      (* Bits 0-3: State/data field *)
     v_field: int;                      (* Bits 4-6: Morphism selector *)
-    c_bit: morphic_state;              (* Bit 7: Floor morphic state *)
+    c_bit: character;                  (* Bit 7: Intensive | Extensive *)
     birth_time: float;                 (* Thermodynamic timestamp *)
     mutable energy: float;             (* Current energy state *)
     mutable refcount: int;             (* Reference counting *)
@@ -131,7 +134,7 @@ module ByteWord = struct
   let extract_fields raw =
     let t_field = raw land 0x0F in           (* Bits 0-3 *)
     let v_field = (raw lsr 4) land 0x07 in   (* Bits 4-6 *)
-    let c_bit = if (raw land 0x80) <> 0 then Pointable else NonPointable in
+    let c_bit = if (raw land 0x80) <> 0 then extensive else intensive in
     (t_field, v_field, c_bit)
 
   let initial_thermo_state temp =
@@ -146,25 +149,26 @@ module ByteWord = struct
   let create raw =
     if raw < 0 || raw > 255 then
       invalid_arg "ByteWord must be 8-bit (0-255)"
-      else
-        let (t_field, v_field, c_bit) = extract_fields raw in
-        let character = match c_bit with Pointable -> Extensive | NonPointable -> Intensive in
-        let thermo = initial_thermo_state temp in
-        let initial_energy = match character with Extensive -> 1.0 | Intensive -> 0.1 in
-        let initial_qstate = 
-          let amplitudes = Array.make 4 QComplex.zero in
-          amplitudes.(0) <- QComplex.one;
-          Superposition (amplitudes, thermo)
-        in
+    else
+      let (t_field, v_field, c_bit) = extract_fields raw in
+      let temp = ByteWord.get_temperature raw in
+      let thermo = ByteWord.initial_thermo_state temp in
+      let initial_energy = match c_bit with Extensive -> 1.0 | Intensive -> 0.1 in
+      let initial_qstate = 
+        let amplitudes = Array.make 4 QComplex.zero in
+        amplitudes.(0) <- QComplex.one;
+        Superposition (amplitudes, thermo)
+      in
       {
         raw;
         t_field;
         v_field;
         c_bit;
         birth_time = Unix.time ();
-        energy = (match c_bit with Pointable -> 1.0 | NonPointable -> 0.1);
+        energy = (match c_bit with Extensive -> 1.0 | Intensive -> 0.1);
         refcount = 1;
-      }
+        thermo_state = initial_qstate;
+      };
 
 
   let get_transformation_rule bw =
@@ -178,19 +182,22 @@ module ByteWord = struct
     | 6 -> Complement
     | 7 -> Negation
     | _ -> failwith "Invalid transformation rule"
+  in
   
   let is_pointable bw =
     match bw.c_bit with
     | Pointable -> true
     | NonPointable -> false
+  in
 
   (* XNOR-based Abelian transformation *)
   let xnor a b width = 
     let mask = (1 lsl width) - 1 in
     (lnot (a lxor b)) land mask
+  in
   
   let abelian_transform bw = 
-    match bw.character with 
+    match bw.c_bit with 
     | Extensive -> 
         let new_t = xnor bw.t_field bw.v_field 4 in
         let new_raw = (bw.raw land 0xF0) lor new_t in
@@ -205,13 +212,13 @@ module ByteWord = struct
   let len = String.length bits in
   if len >= width then bits
   else String.make (width - len) '0' ^ bits
-
+  in
   let to_bra_ket bw =
     let c_str = match bw.c_bit with Pointable -> "1" | NonPointable -> "0" in
     let v_str = int_to_bin_string bw.v_field 3 in
     let t_str = int_to_bin_string bw.t_field 4 in
     Printf.sprintf "<%s%s|%s>" c_str v_str t_str
-
+  in
   let apply_transformation bw =
     let rule = get_transformation_rule bw in
     match rule with
@@ -232,7 +239,7 @@ module ByteWord = struct
     | Complement -> { bw with t_field = bw.t_field lxor 0x0F }
     | Negation -> { bw with raw = (-bw.raw) land 0xFF |> extract_fields |> fun (t,v,c) ->
           { bw with t_field = t; v_field = v; c_bit = c } }
-    (* Apply Abelian transformation if extensive
+          (* Apply Abelian transformation if extensive
     abelian_transform base_transform  *)
   (* Convert ByteWord to value representation *)
   let to_value bw =
@@ -249,7 +256,7 @@ module ByteWord = struct
         | MorphologicalTypes.Decoherent thermo ->
             CoreTypes.VThermo thermo
         | _ -> CoreTypes.VBool (bw.raw > 127)
-  
+
   (* Convert value back to ByteWord *)
   let from_value ?(temp=300.0) = function
     | CoreTypes.VInt i -> create ~temp (i land 0xFF)
@@ -258,8 +265,9 @@ module ByteWord = struct
     | CoreTypes.VString s -> create ~temp (String.length s land 0xFF)
     | CoreTypes.VThermo _ -> create ~temp 128
     | CoreTypes.VQuantum _ -> create ~temp 192
-    | _ -> create ~temp 0
+    | _ -> create ~temp 0 in
 end
+
 
 (* Homoiconic/Holoiconic Properties *)
 module HoloiconicSystem = struct
