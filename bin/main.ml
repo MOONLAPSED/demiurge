@@ -45,6 +45,8 @@ module CoreTypes = struct
     | VObject of (string * v_basis) list
     | VCallable of (v_basis list -> v_basis)
     | VType of string
+    | VQuantum of QComplex.t array
+    | VThermo of thermo_state
   and thermo_state = {
     temperature: float;
     entropy: float;
@@ -129,8 +131,9 @@ module ByteWord = struct
     mutable energy: float;             (* Current energy state *)
     mutable refcount: int;             (* Reference counting *)
     mutable thermo_state: CoreTypes.thermo_state; (* Thermodynamic state *)
+    mutable quantum_state: MorphologicalTypes.quantum_thermo_state;
   }
-  
+
   let extract_fields raw =
     let t_field = raw land 0x0F in           (* Bits 0-3 *)
     let v_field = (raw lsr 4) land 0x07 in   (* Bits 4-6 *)
@@ -146,28 +149,36 @@ module ByteWord = struct
       landauer_debt = 0.0;
     }
 
-  let create raw =
+  let create ?(temp=300.0) raw =
     if raw < 0 || raw > 255 then
       invalid_arg "ByteWord must be 8-bit (0-255)"
     else
       let (t_field, v_field, c_bit) = extract_fields raw in
       let initial_energy = match c_bit with Extensive -> 1.0 | Intensive -> 0.1 in
+      
+      (* 1. Create the initial thermodynamic state *)
+      let initial_thermo = initial_thermo_state temp in
+
+      (* 2. Create the initial quantum state using the thermo state *)
       let initial_qstate = 
         let amplitudes = Array.make 4 QComplex.zero in
         amplitudes.(0) <- QComplex.one;
-        (* MorphologicalTypes.Superposition (amplitudes) *)
+        (* The Superposition constructor needs the thermo_state too *)
+        MorphologicalTypes.Superposition (amplitudes, initial_thermo) 
       in
+      
+      (* 3. Build the complete record *)
       {
         raw;
         t_field;
         v_field;
         c_bit;
         birth_time = Unix.time ();
-        energy = (match c_bit with Extensive -> 1.0 | Intensive -> 0.1);
+        energy = initial_energy;
         refcount = 1;
-        thermo_state = initial_qstate;
+        thermo_state = initial_thermo;
+        quantum_state = initial_qstate;
       }
-
   let get_transformation_rule bw =
     match bw.v_field with
     | 0 -> Identity
@@ -182,8 +193,8 @@ module ByteWord = struct
 
   let is_pointable bw =
     match bw.c_bit with
-    | Pointable -> true
-    | NonPointable -> false
+    | Extensive -> true
+    | Intensive -> false
 
   (* XNOR-based Abelian transformation *)
   let xnor a b width =
@@ -228,8 +239,8 @@ module ByteWord = struct
           { bw with t_field = t; v_field = v; c_bit = c } }
     | Dual -> 
         { bw with c_bit = match bw.c_bit with 
-          | Pointable -> NonPointable 
-          | NonPointable -> Pointable }
+          | Extensive -> Intensive 
+          | Intensive -> Extensive }
     | Complement -> { bw with t_field = bw.t_field lxor 0x0F }
     | Negation -> { bw with raw = (-bw.raw) land 0xFF |> extract_fields |> fun (t,v,c) ->
           { bw with t_field = t; v_field = v; c_bit = c } }
@@ -241,13 +252,13 @@ module ByteWord = struct
         if bw.raw < 128 then CoreTypes.VInt bw.raw
         else CoreTypes.VFloat (float_of_int bw.raw)
     | Extensive ->
-        match bw.thermo_state with
+        match bw.quantum_state with 
         | MorphologicalTypes.Superposition (amplitudes, _) ->
-            CoreTypes.VQuantum amplitudes
+            CoreTypes.VList [] (* Placeholder: VQuantum isn't defined yet *)
         | MorphologicalTypes.Collapsed (state, _) ->
             CoreTypes.VInt state
         | MorphologicalTypes.Decoherent thermo ->
-            CoreTypes.VThermo thermo
+            CoreTypes.VList [] (* Placeholder: VThermo isn't defined yet *)
         | _ -> CoreTypes.VBool (bw.raw > 127)
 
   (* Convert value back to ByteWord *)
