@@ -3,16 +3,7 @@
 		"name": "Demiurge (CUDA, OCaml, Ollama, llvm and uv + Python 3.13)",
 		"build": {
 			"dockerfile": "Dockerfile",
-			"args": {
-				"INSTALL_CUDA": "${templateOption:installCuda}"
-			}
-		},
-		"templateOptions": {
-			"installCuda": {
-				"type": "boolean",
-				"description": "Install CUDA Toolkit (Requires GPU-enabled container host)",
-				"default": false
-			}
+			"context": ".",
 		},
 		"features": {
 			"ghcr.io/devcontainers/features/git:1": {},
@@ -25,7 +16,7 @@
 			"ghcr.io/stuartleeks/dev-container-features/shell-history:0": {},
 			"ghcr.io/prulloac/devcontainer-features/ollama:1": {},
 			"ghcr.io/devcontainers-extra/features/ocaml-opam:1": {
-				"version": "5.1", // Be specific with the OCaml version
+				"version": "5.1",
 				"packages": "dune,ocaml-lsp-server,ocamlformat"
 			},
 			"ghcr.io/devcontainers/features/python:1": {
@@ -71,25 +62,26 @@
 		"postCreateCommand": "bash .devcontainer/setup.sh",
 
 		// --- Port Forwarding & Environment ---
-		// "runArgs": ["--network=host"],
 		"forwardPorts": [
 			11434, 8341
 		],
-		// This block applies settings specifically for Codespaces
 		"hostRequirements": {
 			"gpu": "optional"
 		},
-		"mounts": [
-			"source=demiurge-ollama-models,target=/root/.ollama,type=volume"
+		// "runArgs": ["--network=host"],
+		"runArgs": [
+			"--gpus=all"
 		],
+		"mounts": [
+			"source=demiurge-ollama-models,target=/home/vscode/.ollama,type=volume"
+		],
+		"remoteUser": "vscode",
 		// Use remoteEnv to set variables correctly for each environment
 		"remoteEnv": {
 			"OLLAMA_HOST": "0.0.0.0" // Make Ollama accessible inside the container
 			// OR (GPU/Docker (not codespace)):
 			// "OLLAMA_SERVER": "http://host.docker.internal:11434"
 		}
-		// Crucial for making CUDA work
-		// 	"runArgs": ["--gpus=all"],
 		// if using jupyter instead of vscode for notebooks:
 		// "postStartCommand": "source .venv/bin/activate && jupyter-lab --ip=0.0.0.0 --no-browser --allow-root",
 }
