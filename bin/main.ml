@@ -446,3 +446,64 @@ module Quantum = struct
       bw.ByteWord.quantum_state <- Entangled (indices, combined_thermo)
     ) bw_list
 end
+
+module Morpheme = struct
+  type t = ByteWord.t
+
+  (** Creates a Morpheme, a ByteWord wrapped in morphodynamics. *)
+  let 象_create ~temp ?(source="") ?(holographic_value="") raw : t =
+    ByteWord.create ~temp ~source ~holographic_value raw
+
+  (** Returns the thermodynamic energy, the 炁 of computation. *)
+  let 炁 (m: t) : float = m.energy
+
+  (** Returns the quantum phase. *)
+  let 态_phase (m: t) : float = match m.quantum_state with
+    | MorphologicalTypes.Superposition _ -> 1.0
+    | MorphologicalTypes.Collapsed _ -> 0.0
+    | _ -> 0.5
+
+  (** Reflects the Morpheme, a mirror of its topological self. *)
+  let 镜_reflect (m1: t) (m2: t) : bool = (* Entanglement check *)
+    match (m1.quantum_state, m2.quantum_state) with
+    | (MorphologicalTypes.Entangled (ids1, _), MorphologicalTypes.Entangled (ids2, _)) ->
+        ids1 = ids2
+    | _ -> false
+
+  (** Composes Morphisms, spinning the web of computation. *)
+  let 旋_compose (m1: t) (m2: t) : t = (* Path-dependent composition *)
+    let new_raw = ByteWord.xnor m1.raw m2.raw 8 in
+    let new_m = 象_create ~temp:m1.thermo_state.temperature new_raw in
+    new_m.quantum_state <- MorphologicalTypes.Superposition (
+      Array.map2 (fun z1 z2 -> QComplex.add z1 z2) 
+        (match m1.quantum_state with MorphologicalTypes.Superposition (amps, _) -> amps | _ -> [|QComplex.zero|])
+        (match m2.quantum_state with MorphologicalTypes.Superposition (amps, _) -> amps | _ -> [|QComplex.zero|]),
+      m1.thermo_state
+    );
+    new_m
+  (** Propagates the Morpheme, evolving its state in the Hilbert space. *)
+  let 衍_propagate (m: t) (steps: int) : t = (* Morphological evolution *)
+    let rec evolve m n =
+      if n <= 0 then m else evolve (ByteWord.modified_quine m) (n - 1)
+    in evolve m steps
+  let 态_phase (m: t) : float = (* Morphological phase *)
+    match m.quantum_state with
+    | MorphologicalTypes.Superposition _ -> 1.0 (* High energy *)
+    | MorphologicalTypes.Collapsed _ -> 0.0 (* Low energy *)
+    | _ -> 0.5
+
+  (** Shapeshifts the Morpheme *)
+  let shapeshift = ByteWord.transform
+
+  (** Reifies the Morpheme’s IR, its final testament upon death. *)
+  let exit_and_reify = ExitStack.reify
+
+  (** Resolves the Morpheme against an oracle *)
+  let resolve_with_oracle = ByteWord.resolve
+
+  (** Retrieves the embedding, the collapsed wave function. *)
+  let get_embedding (m: t) : Embedding.t = m.embedding
+
+  (** Retrieves the holographic value *)
+  let get_holographic_value (m: t) : string = m.holographic_value
+end
