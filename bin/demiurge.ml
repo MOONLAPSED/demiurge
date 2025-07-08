@@ -180,16 +180,18 @@ module ByteWord = struct
         quantum_state = initial_qstate;
       }
   let get_transformation_rule bw =
+    (* Import the variants locally for easier use *)
+    let open MorphologicalTypes in 
     match bw.v_field with
-    | 0 -> CoreTypes.transformation_rule.Identity
-    | 1 -> CoreTypes.v_basis.t_field.Conjugate
+    | 0 -> Identity
+    | 1 -> Conjugate
     | 2 -> Transpose
     | 3 -> Adjoint
     | 4 -> Inverse
     | 5 -> Dual
     | 6 -> Complement
     | 7 -> Negation
-    | _ -> failwith "Invalid transformation rule"
+    | _ -> failwith "Impossible: v_field is only 3 bits"
 
   let is_pointable bw =
     match bw.c_bit with
@@ -219,7 +221,7 @@ module ByteWord = struct
     else String.make (width - len) '0' ^ bits
 
   let to_bra_ket bw =
-    let c_str = match bw.c_bit with Pointable -> "1" | NonPointable -> "0" in
+    let c_str = match bw.c_bit with Extensive -> "1" | Intensive -> "0" in
     let v_str = int_to_bin_string bw.v_field 3 in
     let t_str = int_to_bin_string bw.t_field 4 in
     Printf.sprintf "<%s%s|%s>" c_str v_str t_str
@@ -244,6 +246,20 @@ module ByteWord = struct
     | Complement -> { bw with t_field = bw.t_field lxor 0x0F }
     | Negation -> { bw with raw = (-bw.raw) land 0xFF |> extract_fields |> fun (t,v,c) ->
           { bw with t_field = t; v_field = v; c_bit = c } }
+
+  (* Assuming 'target_amplitudes' is a QComplex.t array we want to achieve *)
+    let quantum_fidelity_mse (bw: ByteWord.t) (target_amplitudes: QComplex.t array) : float =
+      match bw.quantum_state with
+      | MorphologicalTypes.Superposition (actual_amplitudes, _) ->
+          let fidelity = Array.fold_left2 (fun acc actual target ->
+            (* Fidelity is often calculated as |<psi_actual | psi_target>|^2 *)
+            (* Here we simplify to an MSE of the amplitudes *)
+            let diff_re = actual.QComplex.re -. target.QComplex.re in
+            let diff_im = actual.QComplex.im -. target.QComplex.im in
+            acc +. (diff_re *. diff_re) +. (diff_im *. diff_im)
+          ) 0.0 actual_amplitudes target_amplitudes in
+          fidelity /. (float_of_int (Array.length target_amplitudes))
+      | _ -> infinity (* If collapsed or decoherent, error is high *)
 
   (* Convert ByteWord to value representation *)
   let to_value bw =
@@ -338,7 +354,24 @@ module HoloiconicSystem = struct
     system.total_energy <- Array.fold_left (fun acc bw -> acc +. bw.ByteWord.energy) 0.0 system.states;
     system.total_entropy <- Array.fold_left (fun acc bw -> acc +. bw.ByteWord.thermo_state.CoreTypes.entropy) 0.0 system.states
 end
+module Fitness = struct
+  open CoreTypes
+  open HoloiconicSystem
 
+  (* Target Free Energy for a stable/successful morphology *)
+  let target_free_energy = 10.0 (* Example value *)
+
+  let calculate_system_free_energy (system: quantum_computation) : float =
+    Array.fold_left (fun acc bw -> 
+      acc +. bw.ByteWord.thermo_state.free_energy
+    ) 0.0 system.states
+
+  (* Thermodynamic MSE: How far are we from the ideal energy state? *)
+  let thermodynamic_mse (system: quantum_computation) : float =
+    let current_g = calculate_system_free_energy system in
+    let error = current_g -. target_free_energy in
+    error *. error (* Squared Error *)
+end
 (* Type-safe variance system *)
 module VarianceSystem = struct
   (* Covariant types - can be read from *)
