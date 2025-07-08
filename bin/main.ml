@@ -45,6 +45,8 @@ module CoreTypes = struct
     | VObject of (string * v_basis) list
     | VCallable of (v_basis list -> v_basis)
     | VType of string
+    | VQuantum of QComplex.t array
+    | VThermo of thermo_state
   and thermo_state = {
     temperature: float;
     entropy: float;
@@ -80,7 +82,7 @@ module MorphologicalTypes = struct
   type character = 
     | Intensive   (* Self-contained, morphically stable *)
     | Extensive   (* Environment-coupled, transformative *)
-  (* Transformation rules *)
+  (* Transformation rules - in VV or VVV space *)
   type transformation_rule = 
     | Identity      (* 000: No transformation *)
     | Conjugate     (* 001: Complex conjugation *)
@@ -98,6 +100,9 @@ module MorphologicalTypes = struct
     | Quine of (unit -> quantum_thermo_state)
     | Decoherent of CoreTypes.thermo_state
 end
+type character = MorphologicalTypes.character
+let extensive = MorphologicalTypes.Extensive
+let intensive = MorphologicalTypes.Intensive
 
 (* Word Size Enumeration *)
 module WordSize = struct
@@ -121,17 +126,18 @@ module ByteWord = struct
     raw: int;                          (* Full 8-bit value *)
     t_field: int;                      (* Bits 0-3: State/data field *)
     v_field: int;                      (* Bits 4-6: Morphism selector *)
-    c_bit: morphic_state;              (* Bit 7: Floor morphic state *)
+    c_bit: character;                  (* Bit 7: Intensive | Extensive *)
     birth_time: float;                 (* Thermodynamic timestamp *)
     mutable energy: float;             (* Current energy state *)
     mutable refcount: int;             (* Reference counting *)
     mutable thermo_state: CoreTypes.thermo_state; (* Thermodynamic state *)
+    mutable quantum_state: MorphologicalTypes.quantum_thermo_state;
   }
-  
+
   let extract_fields raw =
     let t_field = raw land 0x0F in           (* Bits 0-3 *)
     let v_field = (raw lsr 4) land 0x07 in   (* Bits 4-6 *)
-    let c_bit = if (raw land 0x80) <> 0 then Pointable else NonPointable in
+    let c_bit = if (raw land 0x80) <> 0 then extensive else intensive in
     (t_field, v_field, c_bit)
 
   let initial_thermo_state temp =
@@ -143,34 +149,40 @@ module ByteWord = struct
       landauer_debt = 0.0;
     }
 
-  let create raw =
+  let create ?(temp=300.0) raw =
     if raw < 0 || raw > 255 then
       invalid_arg "ByteWord must be 8-bit (0-255)"
-      else
-        let (t_field, v_field, c_bit) = extract_fields raw in
-        let character = match c_bit with Pointable -> Extensive | NonPointable -> Intensive in
-        let thermo = initial_thermo_state temp in
-        let initial_energy = match character with Extensive -> 1.0 | Intensive -> 0.1 in
-        let initial_qstate = 
-          let amplitudes = Array.make 4 QComplex.zero in
-          amplitudes.(0) <- QComplex.one;
-          Superposition (amplitudes, thermo)
-        in
+    else
+      let (t_field, v_field, c_bit) = extract_fields raw in
+      let initial_energy = match c_bit with Extensive -> 1.0 | Intensive -> 0.1 in
+      
+      (* 1. Create the initial thermodynamic state *)
+      let initial_thermo = initial_thermo_state temp in
+
+      (* 2. Create the initial quantum state using the thermo state *)
+      let initial_qstate = 
+        let amplitudes = Array.make 4 QComplex.zero in
+        amplitudes.(0) <- QComplex.one;
+        (* The Superposition constructor needs the thermo_state too *)
+        MorphologicalTypes.Superposition (amplitudes, initial_thermo) 
+      in
+      
+      (* 3. Build the complete record *)
       {
         raw;
         t_field;
         v_field;
         c_bit;
         birth_time = Unix.time ();
-        energy = (match c_bit with Pointable -> 1.0 | NonPointable -> 0.1);
+        energy = initial_energy;
         refcount = 1;
+        thermo_state = initial_thermo;
+        quantum_state = initial_qstate;
       }
-
-
   let get_transformation_rule bw =
     match bw.v_field with
-    | 0 -> Identity
-    | 1 -> Conjugate
+    | 0 -> CoreTypes.transformation_rule.Identity
+    | 1 -> CoreTypes.v_basis.t_field.Conjugate
     | 2 -> Transpose
     | 3 -> Adjoint
     | 4 -> Inverse
@@ -178,19 +190,19 @@ module ByteWord = struct
     | 6 -> Complement
     | 7 -> Negation
     | _ -> failwith "Invalid transformation rule"
-  
+
   let is_pointable bw =
     match bw.c_bit with
-    | Pointable -> true
-    | NonPointable -> false
+    | Extensive -> true
+    | Intensive -> false
 
   (* XNOR-based Abelian transformation *)
-  let xnor a b width = 
+  let xnor a b width =
     let mask = (1 lsl width) - 1 in
     (lnot (a lxor b)) land mask
-  
-  let abelian_transform bw = 
-    match bw.character with 
+
+  let abelian_transform bw =
+    match bw.c_bit with
     | Extensive -> 
         let new_t = xnor bw.t_field bw.v_field 4 in
         let new_raw = (bw.raw land 0xF0) lor new_t in
@@ -198,13 +210,13 @@ module ByteWord = struct
     | Intensive -> bw  (* Identity - quines preserve themselves *)
 
   let int_to_bin_string n width =
-  let rec aux acc n =
-    if n = 0 then acc else aux ((string_of_int (n mod 2)) :: acc) (n / 2)
-  in
-  let bits = aux [] n |> String.concat "" in
-  let len = String.length bits in
-  if len >= width then bits
-  else String.make (width - len) '0' ^ bits
+    let rec aux acc n =
+      if n = 0 then acc else aux ((string_of_int (n mod 2)) :: acc) (n / 2)
+    in
+    let bits = aux [] n |> String.concat "" in
+    let len = String.length bits in
+    if len >= width then bits
+    else String.make (width - len) '0' ^ bits
 
   let to_bra_ket bw =
     let c_str = match bw.c_bit with Pointable -> "1" | NonPointable -> "0" in
@@ -227,38 +239,37 @@ module ByteWord = struct
           { bw with t_field = t; v_field = v; c_bit = c } }
     | Dual -> 
         { bw with c_bit = match bw.c_bit with 
-          | Pointable -> NonPointable 
-          | NonPointable -> Pointable }
+          | Extensive -> Intensive 
+          | Intensive -> Extensive }
     | Complement -> { bw with t_field = bw.t_field lxor 0x0F }
     | Negation -> { bw with raw = (-bw.raw) land 0xFF |> extract_fields |> fun (t,v,c) ->
           { bw with t_field = t; v_field = v; c_bit = c } }
-    (* Apply Abelian transformation if extensive
-    abelian_transform base_transform  *)
+
   (* Convert ByteWord to value representation *)
   let to_value bw =
-    match bw.character with
+    match bw.c_bit with
     | Intensive -> 
         if bw.raw < 128 then CoreTypes.VInt bw.raw
         else CoreTypes.VFloat (float_of_int bw.raw)
     | Extensive ->
-        match bw.quantum_state with
+        match bw.quantum_state with 
         | MorphologicalTypes.Superposition (amplitudes, _) ->
-            CoreTypes.VQuantum amplitudes
+            CoreTypes.VList [] (* Placeholder: VQuantum isn't defined yet *)
         | MorphologicalTypes.Collapsed (state, _) ->
             CoreTypes.VInt state
         | MorphologicalTypes.Decoherent thermo ->
-            CoreTypes.VThermo thermo
+            CoreTypes.VList [] (* Placeholder: VThermo isn't defined yet *)
         | _ -> CoreTypes.VBool (bw.raw > 127)
-  
+
   (* Convert value back to ByteWord *)
   let from_value ?(temp=300.0) = function
-    | CoreTypes.VInt i -> create ~temp (i land 0xFF)
-    | CoreTypes.VFloat f -> create ~temp (int_of_float f land 0xFF)
-    | CoreTypes.VBool b -> create ~temp (if b then 255 else 0)
-    | CoreTypes.VString s -> create ~temp (String.length s land 0xFF)
-    | CoreTypes.VThermo _ -> create ~temp 128
-    | CoreTypes.VQuantum _ -> create ~temp 192
-    | _ -> create ~temp 0
+    | CoreTypes.VInt i -> create (i land 0xFF)
+    | CoreTypes.VFloat f -> create (int_of_float f land 0xFF)
+    | CoreTypes.VBool b -> create (if b then 255 else 0)
+    | CoreTypes.VString s -> create (String.length s land 0xFF)
+    | CoreTypes.VThermo _ -> create 128
+    | CoreTypes.VQuantum _ -> create 192
+    | _ -> create 0
 end
 
 (* Homoiconic/Holoiconic Properties *)
@@ -434,4 +445,65 @@ module Quantum = struct
     List.iter (fun bw -> 
       bw.ByteWord.quantum_state <- Entangled (indices, combined_thermo)
     ) bw_list
+end
+
+module Morpheme = struct
+  type t = ByteWord.t
+
+  (** Creates a Morpheme, a ByteWord wrapped in morphodynamics. *)
+  let 象_create ~temp ?(source="") ?(holographic_value="") raw : t =
+    ByteWord.create ~temp ~source ~holographic_value raw
+
+  (** Returns the thermodynamic energy, the 炁 of computation. *)
+  let 炁 (m: t) : float = m.energy
+
+  (** Returns the quantum phase. *)
+  let 态_phase (m: t) : float = match m.quantum_state with
+    | MorphologicalTypes.Superposition _ -> 1.0
+    | MorphologicalTypes.Collapsed _ -> 0.0
+    | _ -> 0.5
+
+  (** Reflects the Morpheme, a mirror of its topological self. *)
+  let 镜_reflect (m1: t) (m2: t) : bool = (* Entanglement check *)
+    match (m1.quantum_state, m2.quantum_state) with
+    | (MorphologicalTypes.Entangled (ids1, _), MorphologicalTypes.Entangled (ids2, _)) ->
+        ids1 = ids2
+    | _ -> false
+
+  (** Composes Morphisms, spinning the web of computation. *)
+  let 旋_compose (m1: t) (m2: t) : t = (* Path-dependent composition *)
+    let new_raw = ByteWord.xnor m1.raw m2.raw 8 in
+    let new_m = 象_create ~temp:m1.thermo_state.temperature new_raw in
+    new_m.quantum_state <- MorphologicalTypes.Superposition (
+      Array.map2 (fun z1 z2 -> QComplex.add z1 z2) 
+        (match m1.quantum_state with MorphologicalTypes.Superposition (amps, _) -> amps | _ -> [|QComplex.zero|])
+        (match m2.quantum_state with MorphologicalTypes.Superposition (amps, _) -> amps | _ -> [|QComplex.zero|]),
+      m1.thermo_state
+    );
+    new_m
+  (** Propagates the Morpheme, evolving its state in the Hilbert space. *)
+  let 衍_propagate (m: t) (steps: int) : t = (* Morphological evolution *)
+    let rec evolve m n =
+      if n <= 0 then m else evolve (ByteWord.modified_quine m) (n - 1)
+    in evolve m steps
+  let 态_phase (m: t) : float = (* Morphological phase *)
+    match m.quantum_state with
+    | MorphologicalTypes.Superposition _ -> 1.0 (* High energy *)
+    | MorphologicalTypes.Collapsed _ -> 0.0 (* Low energy *)
+    | _ -> 0.5
+
+  (** Shapeshifts the Morpheme *)
+  let shapeshift = ByteWord.transform
+
+  (** Reifies the Morpheme’s IR, its final testament upon death. *)
+  let exit_and_reify = ExitStack.reify
+
+  (** Resolves the Morpheme against an oracle *)
+  let resolve_with_oracle = ByteWord.resolve
+
+  (** Retrieves the embedding, the collapsed wave function. *)
+  let get_embedding (m: t) : Embedding.t = m.embedding
+
+  (** Retrieves the holographic value *)
+  let get_holographic_value (m: t) : string = m.holographic_value
 end
