@@ -16,16 +16,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     clang lldb \
     && rm -rf /var/lib/apt/lists/*
 
-# Conditionally run the CUDA feature installation script.
-RUN if [ "$INSTALL_CUDA" = "true" ]; then \
-        echo "CUDA installation would be triggered here..."; \
-        # Add commands to install CUDA components if needed, or rely on the base image. \
-    else \
-        echo "Skipping CUDA installation."; \
-    fi
-
-ENV SHELL=/bin/bash
-
 # If using devcontainers, omit the following which is done automatically:
 # Create a non-root user that matches your local user.
 # This improves security and fixes potential file permission issues.
@@ -37,6 +27,3 @@ ENV SHELL=/bin/bash
 #     useradd --uid $USER_UID --gid $USER_GID -m $USERNAME && \
 #     echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME && \
 #     chmod 0440 /etc/sudoers.d/$USERNAME
-
-# Switch to the non-root user
-USER $USERNAME
