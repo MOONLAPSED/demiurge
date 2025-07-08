@@ -1,7 +1,4 @@
 FROM nvidia/cuda:12.3.1-devel-ubuntu22.04
-# --- Pre-build
-# This ARG receives the value from devcontainer.json's "build.args"
-ARG INSTALL_CUDA="false"
 
 # Set a non-interactive frontend to avoid prompts during build
 ENV DEBIAN_FRONTEND=noninteractive
