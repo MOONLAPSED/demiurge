@@ -2,7 +2,8 @@
 	{
 		"name": "Demiurge (CUDA, OCaml, Ollama, llvm and uv + Python 3.13)",
 		"build": {
-			"dockerfile": "Dockerfile"
+			"dockerfile": "Dockerfile",
+			"context": "." 
 		},
 		"features": {
 			"ghcr.io/devcontainers/features/git:1": {},
