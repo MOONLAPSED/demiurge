@@ -27,8 +27,19 @@ module QComplex = struct
   let scale s z = { re = s *. z.re; im = s *. z.im }
   let to_string z = sprintf "%.3f + %.3fi" z.re z.im
 end
-(* Core type abstractions - OCaml uses GADTs instead of TypeVars *)
-module CoreTypes = struct
+(* Core type abstractions - OCaml uses GADTs *)
+(* Ponens is the execution of a transformation rule defined by the v_field of a * ByteWord.
+* 
+*     P (Premise): The existence of a ByteWord bw in a specific state
+*         (its t_field and c_bit).
+* 
+*     P -> Q (Implication): The transformation_rule encoded in bw.v_field.
+* 
+*     Q (Conclusion): The resulting ByteWord after 
+*         ByteWord.apply_transformation bw is executed.
+* 
+* Modus Ponens is not just logical inference; it is a thermodynamically costly * action. Applying a transformation changes the ByteWord's energy and updates  * its landauer_debt. *)
+module rec CoreTypes : sig
   (* Type structure (static/potential) basis *)
   type 'a t_basis = 'a
   
@@ -55,10 +66,10 @@ module CoreTypes = struct
   }
   (* Computation/Callable (transformative) basis *)
   type ('a, 'b) c_basis = 'a -> 'b
-end
+end = CoreTypes
 
 (* Morphological Types - Hilbert Space representations *)
-module MorphologicalTypes = struct
+module rec MorphologicalTypes : sig
   (* Covariant quantum state type *)
   type +'a psi_co = 'a
   
@@ -89,9 +100,9 @@ module MorphologicalTypes = struct
     | Transpose     (* 010: Matrix transpose *)
     | Adjoint       (* 011: Hermitian adjoint *)
     | Inverse       (* 100: Multiplicative inverse *)
-    | Dual          (* 101: Categorical dual *)
-    | Complement    (* 110: Logical complement *)
-    | Negation      (* 111: Arithmetic negation *)
+    | Negation      (* 101: Arithmetic negation *)
+    | Dual          (* 110: Categorical dual *)
+    | Complement    (* 111: Logical complement *)
   (* Quantum states with thermodynamic properties *)
   type quantum_thermo_state = 
     | Superposition of QComplex.t array * CoreTypes.thermo_state
@@ -99,7 +110,7 @@ module MorphologicalTypes = struct
     | Collapsed of int * CoreTypes.thermo_state
     | Quine of (unit -> quantum_thermo_state)
     | Decoherent of CoreTypes.thermo_state
-end
+end = MorphologicalTypes
 type character = MorphologicalTypes.character
 let extensive = MorphologicalTypes.Extensive
 let intensive = MorphologicalTypes.Intensive
@@ -121,7 +132,7 @@ module WordSize = struct
   let to_bits ws = (to_bytes ws) * 8
 end
 
-module ByteWord = struct
+module rec ByteWordType : sig
   type t = {
     raw: int;                          (* Full 8-bit value *)
     t_field: int;                      (* Bits 0-3: State/data field *)
@@ -133,7 +144,11 @@ module ByteWord = struct
     mutable thermo_state: CoreTypes.thermo_state; (* Thermodynamic state *)
     mutable quantum_state: MorphologicalTypes.quantum_thermo_state;
   }
+end = ByteWordType
 
+
+module ByteWord = struct
+  include ByteWordType (* Includes the type t *)
   let extract_fields raw =
     let t_field = raw land 0x0F in           (* Bits 0-3 *)
     let v_field = (raw lsr 4) land 0x07 in   (* Bits 4-6 *)
@@ -188,9 +203,9 @@ module ByteWord = struct
     | 2 -> Transpose
     | 3 -> Adjoint
     | 4 -> Inverse
+    | 7 -> Negation
     | 5 -> Dual
     | 6 -> Complement
-    | 7 -> Negation
     | _ -> failwith "Impossible: v_field is only 3 bits"
 
   let is_pointable bw =
@@ -237,15 +252,19 @@ module ByteWord = struct
           v_field = 7 - bw.v_field; 
           t_field = bw.t_field lxor 0x0F }
     | Inverse -> 
-        { bw with raw = 255 - bw.raw |> extract_fields |> fun (t,v,c) -> 
-          { bw with t_field = t; v_field = v; c_bit = c } }
+        let new_raw = 255 - bw.raw in
+        let (t, v, c) = extract_fields new_raw in
+        { bw with raw = new_raw; t_field = t; v_field = v; c_bit = c }
+    | Negation -> 
+        let new_raw = (-bw.raw) land 0xFF in
+        let (t, v, c) = extract_fields new_raw in
+        { bw with raw = new_raw; t_field = t; v_field = v; c_bit = c }
     | Dual -> 
         { bw with c_bit = match bw.c_bit with 
           | Extensive -> Intensive 
           | Intensive -> Extensive }
     | Complement -> { bw with t_field = bw.t_field lxor 0x0F }
-    | Negation -> { bw with raw = (-bw.raw) land 0xFF |> extract_fields |> fun (t,v,c) ->
-          { bw with t_field = t; v_field = v; c_bit = c } }
+
 
   (* Assuming 'target_amplitudes' is a QComplex.t array we want to achieve *)
     let quantum_fidelity_mse (bw: ByteWord.t) (target_amplitudes: QComplex.t array) : float =
@@ -286,6 +305,7 @@ module ByteWord = struct
     | CoreTypes.VThermo _ -> create 128
     | CoreTypes.VQuantum _ -> create 192
     | _ -> create 0
+  let measure bw = Quantum.measure_with_thermodynamic_cost bw
 end
 
 (* Homoiconic/Holoiconic Properties *)
@@ -423,7 +443,7 @@ module Thermodynamics = struct
   
   let landauer_minimum temp = boltzmann_k *. temp *. log 2.0
   
-  let update_thermo_state bw =
+  let update_thermo_state (bw: ByteWordType.t) = 
     let quantum_entropy = entropy_from_quantum_state bw.ByteWord.quantum_state in
     let classical_entropy = log (float_of_int (bw.ByteWord.raw + 1)) in
     let total_entropy = quantum_entropy +. classical_entropy in
@@ -441,7 +461,10 @@ end
 (* Quantum state management with thermodynamic coupling *)
 module Quantum = struct
   open MorphologicalTypes
-  
+
+  let measure_with_thermodynamic_cost (bw: ByteWordType.t) = 
+    (* ... implementation using Thermodynamics.update_thermo_state ... *)
+    0 (* Placeholder *)
   let create_superposition amplitudes thermo_state = 
     let total = Array.fold_left (fun acc z -> acc +. QComplex.norm_sq z) 0.0 amplitudes in
     let norm_factor = 1.0 /. sqrt total in
@@ -540,3 +563,20 @@ module Morpheme = struct
   (** Retrieves the holographic value *)
   let get_holographic_value (m: t) : string = m.holographic_value
 end
+
+(* This function is the "lens" through which the system views a ByteWord as data. *)
+(* It defines the protocol for extracting a classical bit. *)
+
+let observe_as_bit (bw: ByteWord.t) : bool option =
+  (* Protocol Rule 1: Is the ByteWord in a stable, data-holding configuration? *)
+  (* We define this as the 'Identity' transformation being selected. *)
+  if bw.v_field = 0 then
+    (* Protocol Rule 2: If it is a data-holder, what part represents the bit? *)
+    (* Let's choose the highest bit of the 'data' field (t_field). *)
+    let bit_value = (bw.t_field land 0x08) <> 0 in (* Bit 3 of t_field *)
+    Some bit_value
+  else
+    (* If the ByteWord is in a transformative state (v_field is not Identity), *)
+    (* it doesn't have a well-defined classical bit value. It is PURE process. *)
+    (* Its data aspect is unresolved/in superposition. *)
+    None
