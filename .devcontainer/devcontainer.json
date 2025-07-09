@@ -22,10 +22,6 @@
 			"ghcr.io/devcontainers-extra/features/pre-commit:2": {},
 			"ghcr.io/stuartleeks/dev-container-features/shell-history:0": {},
 			"ghcr.io/prulloac/devcontainer-features/ollama:1": {},
-			"ghcr.io/devcontainers-extra/features/ocaml-opam:1": {
-				"version": "5.1",
-				"packages": "dune,ocaml-lsp-server,ocamlformat"
-			},
 			"ghcr.io/devcontainers/features/python:1": {
 				"version": "3.13"
 			},
