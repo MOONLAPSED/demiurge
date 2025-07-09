@@ -34,10 +34,27 @@ WORKDIR /home/$USERNAME
 # We do all opam work in one layer and then clean up to save space.
 RUN opam init -y --disable-sandboxing && \
     opam switch create 5.3.0 -y && \
+    echo 'eval $(opam env)' >> /home/vscode/.bashrc && \
     # The 'eval' is crucial to make the next command aware of the new switch
-    eval $(opam env --switch=5.3.0) && \
-    # Install our core tools
+    eval $(opam env) && \
     opam install -y dune ocaml-lsp-server ocamlformat && \
-    # <<< THE FIX: Clean up build artifacts to reduce layer size
+    # Clean up build artifacts to reduce layer size
     opam clean && \
     rm -rf /home/vscode/.opam/5.3.0/.opam-switch/build/*
+
+# --- Stage 5: Configure Shells ---
+# This ensures that when you open a terminal, the opam environment is active.
+RUN echo '\n# Set up OCaml environment\neval $(opam env)' >> /home/vscode/.bashrc && \
+    mkdir -p /home/vscode/.config/nushell && \
+    echo 'source-env (opam env --shell=nu | from nuon)' >> /home/vscode/.config/nushell/env.nu
+
+# Add environment variables
+ENV OPAMYES=true
+ENV OPAMJOBS=1
+ENV PATH="/home/vscode/.opam/default/bin:$PATH"
+# RUN echo 'eval $(opam env)' >> /home/vscode/.bashrc
+# Create dune config to limit build jobs
+RUN mkdir -p /home/vscode/.config/dune && \
+    echo "(j 1)" > /home/vscode/.config/dune/config
+    chown -R vscode:vscode /home/vscode/.config
+    

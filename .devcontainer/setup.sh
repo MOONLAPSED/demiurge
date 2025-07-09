@@ -8,9 +8,10 @@ echo "--- Running post-create setup as user: $(whoami) ---"
 # This needs to be done for both bash (for scripts) and nushell.
 echo "Configuring shells for OPAM..."
 
-# Add to .bashrc for scripts or manual bash sessions
-echo -e '\n# Set up OCaml environment\neval $(opam env)' >> ~/.bashrc
-
+# Use a check to prevent adding the line on every rebuild
+if ! grep -q "eval \$(opam env)" ~/.bashrc; then
+    echo -e '\n# Set up OCaml environment\neval $(opam env)' >> ~/.bashrc
+fi
 # Add to Nushell's env.nu
 NU_CONFIG_DIR="$HOME/.config/nushell"
 mkdir -p "$NU_CONFIG_DIR"
