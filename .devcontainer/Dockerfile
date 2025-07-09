@@ -1,14 +1,11 @@
 # Filename: .devcontainer/Dockerfile
 
-# --- CHANGE THIS LINE ---
-# FROM nvidia/cuda:12.3.1-devel-ubuntu22.04
-# --- TO THIS LINE ---
 FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# --- Stage 1: Install System Dependencies as ROOT ---
-# We need to add 'software-properties-common' to be able to add the opam PPA.
+# --- Stage 1: Install System Dependencies & OPAM ---
+# We install opam's dependencies, then use the official script to install opam itself.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
@@ -16,12 +13,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo \
     clang \
     unzip \
-    bubblewrap \
-    software-properties-common \
-    gnupg && \
-    add-apt-repository ppa:avsm/ppa && \
-    apt-get update && \
-    apt-get install -y opam && \
+    bubblewrap && \
+    # Install opam using the official script
+    bash -c "sh <(curl -fsSL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh)" && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # --- Stage 2: Create the non-root 'vscode' user as ROOT ---
@@ -44,6 +38,7 @@ ENV OPAMSWITCH=5.3.0
 ENV PATH="/home/vscode/.opam/${OPAMSWITCH}/bin:$PATH"
 
 # --- Stage 5: Initialize OPAM and Create Switch ---
+# The opam binary is now in /usr/local/bin, available to all users.
 RUN opam init --disable-sandboxing --reinit -y && \
     opam switch create $OPAMSWITCH -y
 
