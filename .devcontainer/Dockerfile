@@ -13,7 +13,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo \
     clang \
     unzip \
-    bubblewrap && \
+    bubblewrap \
+    ca-certificates && \
+    # Refresh the certificate store before using curl
+    update-ca-certificates --fresh && \
     # Install opam using the official script
     bash -c "sh <(curl -fsSL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh)" && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -38,7 +41,6 @@ ENV OPAMSWITCH=5.3.0
 ENV PATH="/home/vscode/.opam/${OPAMSWITCH}/bin:$PATH"
 
 # --- Stage 5: Initialize OPAM and Create Switch ---
-# The opam binary is now in /usr/local/bin, available to all users.
 RUN opam init --disable-sandboxing --reinit -y && \
     opam switch create $OPAMSWITCH -y
 
