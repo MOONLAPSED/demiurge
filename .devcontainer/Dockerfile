@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Install opam using the official script
     curl -fsSL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh -o /tmp/install.sh && \
     # Then execute it non-interactively
-    sh /tmp/install.sh && \
+    sh /tmp/install.sh --prefix /usr/local && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # --- Stage 2: Create the non-root 'vscode' user as ROOT ---
