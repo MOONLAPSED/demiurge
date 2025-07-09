@@ -18,7 +18,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Refresh the certificate store before using curl
     update-ca-certificates --fresh && \
     # Install opam using the official script
-    sh -c "echo | sh <(curl -fsSL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh)" && \
+    curl -fsSL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh -o /tmp/install.sh && \
+    # Then execute it non-interactively
+    sh /tmp/install.sh && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # --- Stage 2: Create the non-root 'vscode' user as ROOT ---
