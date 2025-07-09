@@ -31,9 +31,13 @@ USER $USERNAME
 WORKDIR /home/$USERNAME
 
 # --- Stage 4: Initialize OPAM and Install OCaml for the 'vscode' user ---
-# opam is already installed system-wide, so we can just use it.
+# We do all opam work in one layer and then clean up to save space.
 RUN opam init -y --disable-sandboxing && \
     opam switch create 5.3.0 -y && \
-    eval $(opam env) && \
-    opam install -y dune ocaml-lsp-server ocamlformat
-RUN echo '\n# Set up OPAM environment\neval $(opam env)' >> /home/vscode/.bashrc
+    # The 'eval' is crucial to make the next command aware of the new switch
+    eval $(opam env --switch=5.3.0) && \
+    # Install our core tools
+    opam install -y dune ocaml-lsp-server ocamlformat && \
+    # <<< THE FIX: Clean up build artifacts to reduce layer size
+    opam clean && \
+    rm -rf /home/vscode/.opam/5.3.0/.opam-switch/build/*

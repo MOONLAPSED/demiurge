@@ -1,52 +1,33 @@
 #!/bin/bash
+set -e # Exit immediately if a command exits with a non-zero status.
 
-# This script is run by 'postCreateCommand' in devcontainer.json.
-# It sets up the shell environments for both Bash and Nushell.
+echo "--- Running post-create setup as user: $(whoami) ---"
 
-# Ensure all commands run as the 'vscode' user, not root.
-# This prevents permission errors with config files.
-USERNAME="vscode"
-HOME_DIR="/home/$USERNAME"
+# --- OCaml Shell Configuration ---
+# Set up the OPAM environment variables for any new shell sessions.
+# This needs to be done for both bash (for scripts) and nushell.
+echo "Configuring shells for OPAM..."
 
-echo "--- Running post-create setup as user $(whoami) ---"
+# Add to .bashrc for scripts or manual bash sessions
+echo -e '\n# Set up OCaml environment\neval $(opam env)' >> ~/.bashrc
 
-# --- Section 1: Configure Bash ---
-# This is a good practice as a fallback or for scripts that expect bash.
-echo "Configuring Bash environment in $HOME_DIR/.bashrc..."
-echo -e '\n# Set up OPAM environment\neval $(opam env)' >> "$HOME_DIR/.bashrc"
-
-# --- Section 2: Configure Nushell (Your Default Shell) ---
-# Nushell has its own configuration files. We need to create them and
-# populate them with the opam environment variables.
-echo "Configuring Nushell environment..."
-
-NU_CONFIG_DIR="$HOME_DIR/.config/nushell"
-NU_ENV_FILE="$NU_CONFIG_DIR/env.nu"
-NU_CONFIG_FILE="$NU_CONFIG_DIR/config.nu"
-
-# 1. Create the Nushell config directory if it doesn't exist.
+# Add to Nushell's env.nu
+NU_CONFIG_DIR="$HOME/.config/nushell"
 mkdir -p "$NU_CONFIG_DIR"
+echo 'source-env (opam env --shell=nu | from nuon)' >> "$NU_CONFIG_DIR/env.nu"
 
-# 2. Ask opam to generate the environment setup script for Nushell
-#    and save it to its own file (`env.nu`).
-echo "Generating opam environment for Nushell..."
-# We need to run this as the vscode user to get the correct paths.
-sudo -u $USERNAME opam env --shell=nu > "$NU_ENV_FILE"
+# --- Python Environment Setup ---
+# Create a virtual environment using uv and install packages from requirements.txt
+# This makes your Python setup reproducible and ready-to-go.
+echo "Setting up Python virtual environment with uv..."
+uv venv .venv --python 3.13
+# Use 'sync' to ensure the venv matches requirements.txt exactly.
+# Create a requirements.txt file if you don't have one!
+if [ -f "requirements.txt" ]; then
+    uv pip sync requirements.txt -p .venv/bin/python
+else
+    echo "No requirements.txt found. Skipping Python package installation."
+    echo "You can create one and run 'uv pip sync requirements.txt' later."
+fi
 
-# 3. Add a line to the main Nushell config (`config.nu`) to "source"
-#    (load) the environment file we just created.
-echo "Updating $NU_CONFIG_FILE to source the environment..."
-echo -e "\nsource '$NU_ENV_FILE' # Load opam environment variables" >> "$NU_CONFIG_FILE"
-
-# 4. CRITICAL: Ensure the vscode user owns all the new config files.
-#    The postCreateCommand can sometimes run as root, so this prevents permission issues.
-echo "Setting correct permissions for $HOME_DIR/.config..."
-chown -R $USERNAME:$USERNAME "$HOME_DIR/.config"
-chown $USERNAME:$USERNAME "$HOME_DIR/.bashrc"
-
-echo "--- Shell configuration complete! ---"
-
-# --- Section 3: Any other setup commands can go here ---
-# For example, installing Python dependencies with uv:
-# echo "Installing Python packages with uv..."
-# uv pip install -r requirements.txt
+echo "--- Setup complete! ---"
