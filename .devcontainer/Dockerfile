@@ -1,10 +1,7 @@
 # Filename: .devcontainer/Dockerfile
 
-# Start from the official NVIDIA base image.
-# This provides Ubuntu 22.04 and the full CUDA toolkit.
 FROM nvidia/cuda:12.3.1-devel-ubuntu22.04
 
-# Set a non-interactive frontend to avoid prompts during build.
 ENV DEBIAN_FRONTEND=noninteractive
 
 # --- Stage 1: Install System Dependencies as ROOT ---
@@ -26,15 +23,18 @@ RUN groupadd --gid $USER_GID $USERNAME && \
     chmod 0440 /etc/sudoers.d/$USERNAME
 
 # --- Stage 3: Switch to the 'vscode' user ---
-# All subsequent commands will be run as this non-root user.
 USER $USERNAME
 WORKDIR /home/$USERNAME
 
 # --- Stage 4: Install OCaml and OPAM as the 'vscode' user ---
-# This guarantees the user exists before opam is installed.
-RUN bash -c "sh <(curl -fsSL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh)"
+# We tell it WHERE to install opam, so it doesn't have to ask.
+RUN bash -c "sh <(curl -fsSL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh) --prefix /home/vscode/.local --bin /home/vscode/.local/bin"
+
 # We need to set the PATH here so the next RUN command can find opam
-ENV PATH="/home/vscode/.opam/default/bin:${PATH}"
+ENV PATH="/home/vscode/.local/bin:${PATH}"
+
+# Now, initialize opam and install packages. The `eval $(opam env)` makes sure
+# the OCaml compiler and tools are on the path for the `opam install` command.
 RUN opam init -y --disable-sandboxing && \
     opam switch create 5.1 -y && \
     eval $(opam env) && \
