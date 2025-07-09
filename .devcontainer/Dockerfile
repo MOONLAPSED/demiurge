@@ -17,8 +17,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     clang \
     unzip \
     bubblewrap \
-    software-properties-common && \
-    # Add the official OCaml PPA to get a modern opam
+    software-properties-common \
+    gnupg && \
     add-apt-repository ppa:avsm/ppa && \
     apt-get update && \
     apt-get install -y opam && \
