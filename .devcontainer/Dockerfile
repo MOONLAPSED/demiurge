@@ -15,12 +15,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     bubblewrap \
     ca-certificates && \
-    # Refresh the certificate store before using curl
-    update-ca-certificates --fresh && \
-    # Install opam using the official script
-    curl -fsSL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh -o /tmp/install.sh && \
-    # Then execute it non-interactively
-    sh /tmp/install.sh /usr/local/bin && \
+    # 1. Download the official pre-compiled binary for opam.
+    #    The -L flag follows redirects.
+    curl -L https://github.com/ocaml/opam/releases/download/2.2.0/opam-2.2.0-x86_64-linux -o /usr/local/bin/opam && \
+    # 2. Make the downloaded binary executable.
+    chmod +x /usr/local/bin/opam && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # --- Stage 2: Create the non-root 'vscode' user as ROOT ---
