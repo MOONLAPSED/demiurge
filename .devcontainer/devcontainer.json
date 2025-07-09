@@ -68,10 +68,6 @@
 		},
 		// --- Lifecycle Commands ---
 		"postCreateCommand": "bash .devcontainer/setup.sh",
-		// --- Host and Networking ---
-		"hostRequirements": {
-			"gpu": "optional"
-		},
 		"runArgs": ["--network=host"], // Using host network, so forwardPorts is not needed
 		"mounts": [
 			"source=demiurge-ollama-models,target=/home/vscode/.ollama,type=volume",
