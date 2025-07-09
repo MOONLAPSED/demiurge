@@ -53,8 +53,6 @@ ENV OPAMYES=true
 ENV OPAMJOBS=1
 ENV PATH="/home/vscode/.opam/default/bin:$PATH"
 # RUN echo 'eval $(opam env)' >> /home/vscode/.bashrc
-# Create dune config to limit build jobs
+# Create dune config to limit build jobs for low-memory environments
 RUN mkdir -p /home/vscode/.config/dune && \
     echo "(j 1)" > /home/vscode/.config/dune/config
-    chown -R vscode:vscode /home/vscode/.config
-    
