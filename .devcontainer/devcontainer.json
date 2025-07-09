@@ -45,7 +45,7 @@
 					"editor.defaultFormatter": "ms-python.vscode-pylance",
 					"ocaml.sandbox": {
 						"kind": "opam",
-						"switch": "5.1.1"
+						"switch": "5.3.0"
 					}
 				},
 				"extensions": [

@@ -33,7 +33,6 @@ WORKDIR /home/$USERNAME
 # --- Stage 4: Initialize OPAM and Install OCaml for the 'vscode' user ---
 # opam is already installed system-wide, so we can just use it.
 RUN opam init -y --disable-sandboxing && \
-    opam switch create 5.1 -y && \
-    # The 'eval' is crucial for the next line to find the right OCaml compiler
+    opam switch create 5.3.0 -y && \
     eval $(opam env) && \
     opam install -y dune ocaml-lsp-server ocamlformat
