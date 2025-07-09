@@ -1,73 +1,52 @@
 #!/bin/bash
-set -e
 
-echo "--- Starting post-creation setup ---"
+# This script is run by 'postCreateCommand' in devcontainer.json.
+# It sets up the shell environments for both Bash and Nushell.
 
-# Ensure we're using the correct Python from the feature
-PYTHON_PATH="/usr/local/bin/python"
-if [ ! -f "$PYTHON_PATH" ]; then
-    echo "Warning: Python not found at expected path, searching..."
-    PYTHON_PATH=$(which python3)
-fi
+# Ensure all commands run as the 'vscode' user, not root.
+# This prevents permission errors with config files.
+USERNAME="vscode"
+HOME_DIR="/home/$USERNAME"
 
-# Create Python virtual environment with uv
-echo "Creating Python virtual environment..."
-uv venv .venv --python "$PYTHON_PATH"
+echo "--- Running post-create setup as user $(whoami) ---"
 
-# Install Python packages
-echo "Installing Python packages..."
-.venv/bin/pip install -U jupyterlab nox mypy
+# --- Section 1: Configure Bash ---
+# This is a good practice as a fallback or for scripts that expect bash.
+echo "Configuring Bash environment in $HOME_DIR/.bashrc..."
+echo -e '\n# Set up OPAM environment\neval $(opam env)' >> "$HOME_DIR/.bashrc"
 
-# Verify OCaml installation and environment
-echo "Verifying OCaml installation..."
-if command -v opam >/dev/null 2>&1; then
-    echo "OPAM found, initializing environment..."
-    
-    # Initialize OPAM environment if not already done
-    if [ ! -d ~/.opam ]; then
-        opam init -y --disable-sandboxing
-    fi
-    
-    # Ensure correct switch is active
-    opam switch 5.1.1 2>/dev/null || opam switch create 5.1.1
-    
-    # Install required OCaml packages if not already installed
-    eval $(opam env --switch=5.1.1)
-    opam install -y dune ocaml-lsp-server ocamlformat
-    
-    # Add OPAM environment initialization to bashrc
-    echo -e '\n# Initialize OPAM environment\neval $(opam env --switch=5.1.1)' >> ~/.bashrc
-    
-    echo "OCaml environment setup complete"
-else
-    echo "Warning: OPAM not found. OCaml features may not work correctly."
-fi
+# --- Section 2: Configure Nushell (Your Default Shell) ---
+# Nushell has its own configuration files. We need to create them and
+# populate them with the opam environment variables.
+echo "Configuring Nushell environment..."
 
-# Set up git configuration (optional)
-echo "Setting up git configuration..."
-git config --global init.defaultBranch main
+NU_CONFIG_DIR="$HOME_DIR/.config/nushell"
+NU_ENV_FILE="$NU_CONFIG_DIR/env.nu"
+NU_CONFIG_FILE="$NU_CONFIG_DIR/config.nu"
 
-# Create a simple test to verify everything works
-echo "Running verification tests..."
+# 1. Create the Nushell config directory if it doesn't exist.
+mkdir -p "$NU_CONFIG_DIR"
 
-# Test Python
-echo "Testing Python installation..."
-.venv/bin/python --version
+# 2. Ask opam to generate the environment setup script for Nushell
+#    and save it to its own file (`env.nu`).
+echo "Generating opam environment for Nushell..."
+# We need to run this as the vscode user to get the correct paths.
+sudo -u $USERNAME opam env --shell=nu > "$NU_ENV_FILE"
 
-# Test OCaml if available
-if command -v ocaml >/dev/null 2>&1; then
-    echo "Testing OCaml installation..."
-    eval $(opam env --switch=5.1.1)
-    ocaml -version
-    
-    # Test OCaml LSP
-    if command -v ocamllsp >/dev/null 2>&1; then
-        echo "OCaml LSP server available"
-    else
-        echo "Warning: OCaml LSP server not found"
-    fi
-fi
+# 3. Add a line to the main Nushell config (`config.nu`) to "source"
+#    (load) the environment file we just created.
+echo "Updating $NU_CONFIG_FILE to source the environment..."
+echo -e "\nsource '$NU_ENV_FILE' # Load opam environment variables" >> "$NU_CONFIG_FILE"
 
-echo "--- Post-creation setup complete ---"
-echo "Virtual environment created at: $(pwd)/.venv"
-echo "To activate: source .venv/bin/activate"
+# 4. CRITICAL: Ensure the vscode user owns all the new config files.
+#    The postCreateCommand can sometimes run as root, so this prevents permission issues.
+echo "Setting correct permissions for $HOME_DIR/.config..."
+chown -R $USERNAME:$USERNAME "$HOME_DIR/.config"
+chown $USERNAME:$USERNAME "$HOME_DIR/.bashrc"
+
+echo "--- Shell configuration complete! ---"
+
+# --- Section 3: Any other setup commands can go here ---
+# For example, installing Python dependencies with uv:
+# echo "Installing Python packages with uv..."
+# uv pip install -r requirements.txt

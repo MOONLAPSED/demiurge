@@ -36,3 +36,4 @@ RUN opam init -y --disable-sandboxing && \
     opam switch create 5.3.0 -y && \
     eval $(opam env) && \
     opam install -y dune ocaml-lsp-server ocamlformat
+RUN echo '\n# Set up OPAM environment\neval $(opam env)' >> /home/vscode/.bashrc
