@@ -21,7 +21,6 @@
 			"ghcr.io/eitsupi/devcontainer-features/nushell:0": {},
 			"ghcr.io/devcontainers-extra/features/pre-commit:2": {},
 			"ghcr.io/stuartleeks/dev-container-features/shell-history:0": {},
-			"ghcr.io/prulloac/devcontainer-features/ollama:1": {},
 			"ghcr.io/devcontainers/features/python:1": {
 				"version": "3.13"
 			},
@@ -32,7 +31,6 @@
 			"ghcr.io/devcontainers-extra/features/nox:2": {},
 			"ghcr.io/schlich/devcontainer-features/helix:1": {},
 			"ghcr.io/warrenbuckley/codespace-features/sqlite:1": {},
-			"ghcr.io/devcontainers-extra/features/xonsh:1": {}
 		},
 		"customizations": {
 			"vscode": {
@@ -68,18 +66,9 @@
 		},
 		// --- Lifecycle Commands ---
 		"postCreateCommand": "bash .devcontainer/setup.sh",
-		"runArgs": ["--network=host"], // Using host network, so forwardPorts is not needed
+		"runArgs": ["--network=host"],
 		"mounts": [
-			"source=demiurge-ollama-models,target=/home/vscode/.ollama,type=volume",
 			"source=opam-cache,target=/home/vscode/.opam,type=volume"
 		],
-		"remoteUser": "vscode",
-		"remoteEnv": {
-			// Make Ollama accessible outside the container
-			"OLLAMA_HOST": "0.0.0.0"
-			// OR (GPU/Docker (not codespace)):
-			// "OLLAMA_SERVER": "http://host.docker.internal:11434"
-			// if using jupyter instead of vscode for notebooks:
-			// "postStartCommand": "source .venv/bin/activate && jupyter-lab --ip=0.0.0.0 --no-browser --allow-root"
-		}
+		"remoteUser": "vscode"
 }
