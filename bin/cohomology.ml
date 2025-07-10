@@ -1,5 +1,11 @@
-(* file: morphological_topos.ml *)
-(* Building on the ByteWord MSC framework *)
+[@@@warning "-32-37"]
+(* 
+https://github.com/MOONLAPSED/demiurge Morphological Source Code &
+Demiurge © 2025 by Moonlapsed is licensed under:
+https://creativecommons.org/licenses/by/4.0/ CC BY 4.0
+*)
+
+(* file: cohomology.ml *)
 
 open Printf
 
