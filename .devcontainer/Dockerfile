@@ -55,6 +55,6 @@ RUN opam install -y ocaml-lsp-server && \
 # --- Stage 7: Final User Configuration ---
 RUN echo '\n# Set up OCaml environment\neval $(opam env)' >> /home/vscode/.bashrc && \
     mkdir -p /home/vscode/.config/dune && \
-    printf "(lang dune 3.16)\n(j 1)\n" > /home/vscode/.config/dune/config && \
+    printf "(lang dune 3.16)\n(jobs 1)\n" > /home/vscode/.config/dune/config && \
     mkdir -p /home/vscode/.config/nushell && \
     echo 'source-env (opam env --shell=nu | from nuon)' >> /home/vscode/.config/nushell/env.nu

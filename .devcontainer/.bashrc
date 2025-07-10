@@ -27,7 +27,7 @@ alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
 alias ip='ip --color=auto'
 alias ll='ls -alF --color=auto'
-alias la='ls -A --color=auto'
+alias lll='ls -A --color=auto'
 alias l='ls -CF --color=auto'
 alias kex='kex --win -s'
 # ==========================================================
@@ -56,10 +56,20 @@ git config --global core.fsmonitor 'true'
 # Git configuration
 git config --global rerere.enabled true
 # Reverse git add (takes off git add <file> from staging area)
-unstage() {
-    git reset HEAD -- $1
+function unstage() {
+    if [ $# -eq 0 ]; then
+        git restore --staged .
+    else
+        git restore --staged "$@"
+    fi
+    echo "✅ Unstaged: $@"
 }
-: <<'GIT_DOC'
+gunadd() {
+    git reset HEAD -- "$@"
+    echo "✅ Unstaged: $@"
+}
+gitdoc() {
+    cat <<'GIT_DOC'
     ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━=┓
     ┃                  Git Staging & Reset Cheat Sheet               ┃
     ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━=┫
@@ -82,9 +92,6 @@ unstage() {
     ⚠  Use `git reset --hard` with caution—it nukes all changes!
 
 GIT_DOC
-alias gitdoc='cat <<EOF
-# (Paste the docstring here)
-EOF'
 # ==========================================================
 # Shell Behavior Enhancements
 # ==========================================================
@@ -191,10 +198,10 @@ cr() {
   if [ $# -eq 0 ]; then
     last_cmd="$(fc -ln -1 | sed "s/^\s*//")"
     if [ -n "$last_cmd" ]; then
-      HISTTIMEFORMAT= histunique | grep -i "$last_cmd"
+      history | grep -i "$last_cmd" | uniq
     fi
   else
-    HISTTIMEFORMAT= histunique | grep -i "$@"
+    history | grep -i "$@" | uniq
   fi
   echo -ne "\033[32m(reverse-i-search)\033[0m"': '
 }
@@ -367,25 +374,32 @@ bp() {
 #   .bp
 #
 .bp() {
-    local current_dir="$(pwd)"
-    local parent_dir="$(dirname "$current_dir")"
-    # Check if the current directory is not the root directory
-    if [[ "$current_dir" == "/" ]]; then
-        echo "Cannot move the root directory."
-        return 1
+  local current_dir="$(pwd)"
+  local parent_dir="$(dirname "$current_dir")"
+  if [[ "$current_dir" == "/" ]]; then
+    echo "Cannot move the root directory."
+    return 1
+  fi
+  shopt -s dotglob
+  for item in ./*; do
+    if [[ -e "$item" ]]; then
+      cp -rv "$item" "$parent_dir" || return
+      rm -rf "$item"
     fi
-    # Copy all files and directories (including hidden ones)
-    shopt -s dotglob # Enable matching dotfiles
-    for item in ./*; do
-        if [[ -e "$item" ]]; then
-            cp -rv --no-preserve=mode "$item" "$parent_dir" || return
-            rm -rf "$item"
-        fi
-    done
-    shopt -u dotglob # Disable matching dotfiles
-    # Change to the parent directory
+  done
+  shopt -u dotglob
+  if [[ "$(ls -A "$current_dir")" == "" ]]; then
+    read -r -p "Delete empty current directory? [y/N] " response
+    if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+      rmdir "$current_dir" && cd "$parent_dir" || return
+      echo "Directory deleted and changed to parent."
+    else
+      cd "$parent_dir" || return
+      echo "Files moved, directory not deleted, changed to parent"
+    fi
+  else
     cd "$parent_dir" || return
-
-    echo "All files and directories copied and deleted from the current directory."
+    echo "Files moved, current directory not empty, changed to parent."
+  fi
 }
 fi

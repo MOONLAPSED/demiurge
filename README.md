@@ -4,7 +4,7 @@
 
 > opam exec -- dune build
 
-> opam exec -- dune exec bin/main.exe
+> opam exec -- opam exec dune exec ./bin/main.exe
 
 
 
