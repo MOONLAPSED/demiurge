@@ -4,7 +4,11 @@ https://github.com/MOONLAPSED/demiurge Morphological Source Code &
 Demiurge © 2025 by Moonlapsed is licensed under:
 https://creativecommons.org/licenses/by/4.0/ CC BY 4.0
 *)
-
+let pixel_color bw =
+  let r = int_of_float (bw.energy *. 255.0) in
+  let g = int_of_float (abs_float bw.magnitude_position *. 255.0) in
+  let b = int_of_float (abs_float bw.phase_position *. 255.0) in
+  Printf.sprintf "\033[38;2;%d;%d;%dm" r g b
 (* Unified Quantum-Thermodynamic Computing System *)
 (* Synthesizing intensive thermodynamic character with holoiconic type system *)
 open Printf

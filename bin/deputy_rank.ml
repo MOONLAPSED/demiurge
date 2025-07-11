@@ -1,5 +1,11 @@
+[@@@warning "-32-37"]
+(* 
+https://github.com/MOONLAPSED/demiurge Morphological Source Code &
+Demiurge © 2025 by Moonlapsed is licensed under:
+https://creativecommons.org/licenses/by/4.0/ CC BY 4.0
+*)
 (* 'Arity' is who's the boss. C is the Captain. DunderC is his Deputy *)
-(* file: morphological_sheaf.ml *)
+(* file: deputy_rank.ml *)
 open Complex
 open Tensor
 
